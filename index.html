@@ -3,39 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      body {
-        background: #000;
-        overflow: hidden;
-        font-family: Georgia, serif;
-        cursor: none;
-      }
-      canvas {
-        display: block;
-        position: fixed;
-        inset: 0;
-      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { background: #000; overflow: hidden; font-family: Georgia, serif; cursor: none; }
+      canvas { display: block; position: fixed; inset: 0; }
       #custom-cursor {
         position: fixed;
-        width: 14px;
-        height: 14px;
+        width: 14px; height: 14px;
         border-radius: 50%;
-        background: radial-gradient(
-          circle,
-          rgba(255, 180, 220, 0.95) 0%,
-          rgba(255, 100, 160, 0.6) 60%,
-          transparent 100%
-        );
+        background: radial-gradient(circle, rgba(255,180,220,0.95) 0%, rgba(255,100,160,0.6) 60%, transparent 100%);
         pointer-events: none;
         z-index: 9999;
         transform: translate(-50%, -50%);
-        box-shadow:
-          0 0 12px rgba(255, 120, 180, 0.8),
-          0 0 24px rgba(255, 80, 150, 0.4);
+        box-shadow: 0 0 12px rgba(255,120,180,0.8), 0 0 24px rgba(255,80,150,0.4);
       }
     </style>
   </head>
@@ -48,10 +27,8 @@
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
 
-      const W = canvas.width,
-        H = canvas.height;
-      const cx = W / 2,
-        groundY = H * 0.96;
+      const W = canvas.width, H = canvas.height;
+      const cx = W / 2, groundY = H * 0.96;
       let t = 0;
 
       const isMobile = W < 600;
@@ -60,119 +37,51 @@
       const cursorEl = document.getElementById("custom-cursor");
       const mousePos = { x: -999, y: -999 };
       window.addEventListener("mousemove", (e) => {
-        mousePos.x = e.clientX;
-        mousePos.y = e.clientY;
+        mousePos.x = e.clientX; mousePos.y = e.clientY;
         cursorEl.style.left = e.clientX + "px";
         cursorEl.style.top = e.clientY + "px";
       });
-      window.addEventListener(
-        "touchmove",
-        (e) => {
-          mousePos.x = e.touches[0].clientX;
-          mousePos.y = e.touches[0].clientY;
-          cursorEl.style.left = e.touches[0].clientX + "px";
-          cursorEl.style.top = e.touches[0].clientY + "px";
-        },
-        { passive: true },
-      );
+      window.addEventListener("touchmove", (e) => {
+        mousePos.x = e.touches[0].clientX; mousePos.y = e.touches[0].clientY;
+        cursorEl.style.left = e.touches[0].clientX + "px";
+        cursorEl.style.top = e.touches[0].clientY + "px";
+      }, { passive: true });
 
       // ---- RNG ----
       function makeRng(s) {
         let v = s;
-        return () => {
-          v = (v * 16807) % 2147483647;
-          return (v - 1) / 2147483646;
-        };
+        return () => { v = (v * 16807) % 2147483647; return (v - 1) / 2147483646; };
       }
 
       // ---- GRASS ----
       function genBlades(n, seed, hMin, hMax, lMax, aMin, aMax, sx) {
-        const rng = makeRng(seed),
-          b = [];
+        const rng = makeRng(seed), b = [];
         for (let i = 0; i < n; i++)
-          b.push({
-            x: (rng() - 0.5) * sx,
-            h: hMin + rng() * (hMax - hMin),
-            lean: (rng() - 0.5) * lMax * 2,
-            lw: 0.7 + rng() * 1.0,
-            alpha: aMin + rng() * (aMax - aMin),
-            phase: rng() * Math.PI * 2,
-          });
+          b.push({ x: (rng() - 0.5) * sx, h: hMin + rng() * (hMax - hMin), lean: (rng() - 0.5) * lMax * 2, lw: 0.7 + rng() * 1.0, alpha: aMin + rng() * (aMax - aMin), phase: rng() * Math.PI * 2 });
         return b;
       }
 
-      const bgBlades = genBlades(
-        120,
-        42,
-        65 * MOBILE_SCALE,
-        135 * MOBILE_SCALE,
-        40,
-        0.3,
-        0.55,
-        W * 1.1,
-      );
-      const midBlades = genBlades(
-        140,
-        77,
-        55 * MOBILE_SCALE,
-        100 * MOBILE_SCALE,
-        38,
-        0.4,
-        0.65,
-        W * 1.05,
-      );
-      const fgBlades = genBlades(
-        160,
-        13,
-        30 * MOBILE_SCALE,
-        65 * MOBILE_SCALE,
-        36,
-        0.5,
-        0.82,
-        W * 1.1,
-      );
+      const bgBlades  = genBlades(120, 42, 65*MOBILE_SCALE, 135*MOBILE_SCALE, 40, 0.3, 0.55, W*1.1);
+      const midBlades = genBlades(140, 77, 55*MOBILE_SCALE, 100*MOBILE_SCALE, 38, 0.4, 0.65, W*1.05);
+      const fgBlades  = genBlades(160, 13, 30*MOBILE_SCALE,  65*MOBILE_SCALE, 36, 0.5, 0.82, W*1.1);
 
       function drawGrass(x, base, h, lean, lw, col, ripple = 0) {
-        const pl = lean + ripple,
-          ph = h;
-        const gap = lw * 1.1,
-          ddx = pl,
-          ddy = -ph,
-          len = Math.sqrt(ddx * ddx + ddy * ddy) || 1;
-        const nx = (-ddy / len) * gap * 0.5,
-          ny = (ddx / len) * gap * 0.5;
+        const pl = lean + ripple, ph = h;
+        const gap = lw * 1.1, ddx = pl, ddy = -ph, len = Math.sqrt(ddx*ddx+ddy*ddy)||1;
+        const nx = (-ddy/len)*gap*0.5, ny = (ddx/len)*gap*0.5;
         for (let s = -1; s <= 1; s += 2) {
-          const ox = nx * s,
-            oy = ny * s;
+          const ox = nx*s, oy = ny*s;
           ctx.beginPath();
-          ctx.moveTo(x + ox, base + oy);
-          ctx.bezierCurveTo(
-            x + pl * 0.15 + ox * 0.7,
-            base - ph * 0.3 + oy * 0.7,
-            x + pl * 0.85 + ox * 0.2,
-            base - ph * 0.65 + oy * 0.2,
-            x + pl,
-            base - ph,
-          );
-          ctx.strokeStyle = col;
-          ctx.lineWidth = lw * 0.55;
-          ctx.lineCap = "round";
-          ctx.stroke();
+          ctx.moveTo(x+ox, base+oy);
+          ctx.bezierCurveTo(x+pl*0.15+ox*0.7, base-ph*0.3+oy*0.7, x+pl*0.85+ox*0.2, base-ph*0.65+oy*0.2, x+pl, base-ph);
+          ctx.strokeStyle = col; ctx.lineWidth = lw*0.55; ctx.lineCap = "round"; ctx.stroke();
         }
         ctx.beginPath();
         ctx.moveTo(x, base);
-        ctx.bezierCurveTo(
-          x + pl * 0.15,
-          base - ph * 0.3,
-          x + pl * 0.85,
-          base - ph * 0.65,
-          x + pl,
-          base - ph,
-        );
+        ctx.bezierCurveTo(x+pl*0.15, base-ph*0.3, x+pl*0.85, base-ph*0.65, x+pl, base-ph);
         const m = col.match(/[\d.]+/g);
-        ctx.strokeStyle = `rgba(${m[0]},${m[1]},${m[2]},${parseFloat(m[3]) * 0.3})`;
-        ctx.lineWidth = lw * 0.3;
-        ctx.stroke();
+        ctx.strokeStyle = `rgba(${m[0]},${m[1]},${m[2]},${parseFloat(m[3])*0.3})`;
+        ctx.lineWidth = lw*0.3; ctx.stroke();
       }
 
       // ---- GRASS WAVES ----
@@ -180,75 +89,140 @@
       function getGrassRipple(bx) {
         let ripple = 0;
         for (const wave of grassWaves) {
-          const dist = Math.abs(bx - wave.x),
-            waveRadius = wave.t * 110;
-          const waveFront = Math.abs(dist - waveRadius),
-            spreadWidth = 20 + wave.t * 12;
+          const dist = Math.abs(bx - wave.x), waveRadius = wave.t * 110;
+          const waveFront = Math.abs(dist - waveRadius), spreadWidth = 20 + wave.t * 12;
           if (waveFront < spreadWidth) {
             const timeDecay = Math.pow(Math.max(0, 1 - wave.t / 0.8), 2);
             const distDecay = Math.exp(-dist * 0.012);
-            const frontShape = Math.cos(
-              (waveFront / spreadWidth) * Math.PI * 0.5,
-            );
+            const frontShape = Math.cos((waveFront / spreadWidth) * Math.PI * 0.5);
             ripple += frontShape * 12 * timeDecay * distDecay;
           }
         }
         return ripple;
       }
 
-      // ---- FIREFLIES (chỉ bay trong vùng cỏ thấp) ----
-      const GRASS_TOP = H * 0.8; // đom đóm không bay cao hơn đây
-      const fireflies = Array.from({ length: 32 }, () => ({
-        x: cx + (Math.random() - 0.5) * W * 0.9,
-        y: groundY - Math.random() * (groundY - GRASS_TOP) * 0.6,
-        vx: (Math.random() - 0.5) * 0.18,
-        vy: (Math.random() - 0.5) * 0.1,
-        r: Math.random() * 2.0 + 1.0,
-        phase: Math.random() * Math.PI * 2,
-        blinkSpd: Math.random() * 0.09 + 0.05,
-        hue: 50 + Math.random() * 30,
-      }));
+      // ---- FIREFLIES - chỉ xuất hiện khi hover cỏ ----
+      const GRASS_TOP = H * 0.80;
+      const fireflies = []; // spawn khi hover, tự fade out
+      const MAX_FIREFLIES = 60;
+
+      function spawnFirefly(sx) {
+        if (fireflies.length >= MAX_FIREFLIES) return;
+        fireflies.push({
+          x: sx + (Math.random() - 0.5) * 60,
+          y: groundY - 10 - Math.random() * (groundY - GRASS_TOP) * 0.3,
+          vx: (Math.random() - 0.5) * 0.22,
+          vy: -(Math.random() * 0.18 + 0.06),
+          r: Math.random() * 2.0 + 1.0,
+          phase: Math.random() * Math.PI * 2,
+          blinkSpd: Math.random() * 0.09 + 0.05,
+          hue: 50 + Math.random() * 30,
+          life: 1.0,
+          decay: 0.0015 + Math.random() * 0.002,
+        });
+      }
 
       // ---- BUTTERFLY ----
-      const btTarget = { x: cx + 30, y: groundY - 220 * MOBILE_SCALE };
+      // Branch — mọc từ đất, vươn ngang, đầu cành cong lên
+      const BRANCH_ROOT_X = cx - W * 0.14;
+      const BRANCH_ROOT_Y = groundY;
+      const BRANCH_FORK_X = cx - W * 0.12;
+      const BRANCH_FORK_Y = groundY - 110 * MOBILE_SCALE;
+      const BRANCH_TIP_X  = cx + W * 0.10;
+      const BRANCH_TIP_Y  = groundY - 160 * MOBILE_SCALE;
+      const btTarget = { x: BRANCH_TIP_X, y: BRANCH_TIP_Y - 10 };
       const bt = {
-        x: -W * 0.1,
-        y: H * 0.35,
-        phase: 0,
-        pathT: 0,
-        landed: false,
-        landedT: 0,
+        x: -W * 0.1, y: H * 0.35,
+        phase: 0, pathT: 0, landed: false, landedT: 0,
         size: (Math.max(10, W * 0.028) + 10) * MOBILE_SCALE,
       };
       const btTrail = [];
-      const btFly = {
-        active: false,
-        phase: "away",
-        awayT: 0,
-        returnT: 0,
-        startX: 0,
-        startY: 0,
-        awayX: 0,
-        awayY: 0,
-      };
+      const btFly = { active: false, phase: "away", awayT: 0, returnT: 0, startX: 0, startY: 0, awayX: 0, awayY: 0 };
       let btFlapSpeed = 9.0;
       let btHoverTriggered = false;
 
-      function easeInOut(x) {
-        return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
-      }
+      function easeInOut(x) { return x < 0.5 ? 2*x*x : 1 - Math.pow(-2*x+2,2)/2; }
 
       function isNearButterfly(mx, my) {
         if (!bt.landed || btFly.active) return false;
-        const dx = mx - bt.x,
-          dy = my - bt.y;
-        return Math.sqrt(dx * dx + dy * dy) < bt.size * 3.5;
+        const dx = mx - bt.x, dy = my - bt.y;
+        return Math.sqrt(dx*dx+dy*dy) < bt.size * 3.5;
       }
       function isNearGrass(mx, my) {
         if (my <= groundY - 80) return false;
-        return mx > cx - W * 0.55 && mx < cx + W * 0.55
-          ? { sx: mx, sy: my }
-          : false;
+        return mx > cx - W*0.55 && mx < cx + W*0.55 ? { sx: mx, sy: my } : false;
+      }
+
+      function drawBranch() {
+        const sway = Math.sin(t * 0.4) * 1.8;
+        const rx = BRANCH_ROOT_X, ry = BRANCH_ROOT_Y;
+        const fx = BRANCH_FORK_X, fy = BRANCH_FORK_Y;
+        const tx = BRANCH_TIP_X + sway * 0.6, ty = BRANCH_TIP_Y;
+
+        ctx.save();
+        ctx.lineCap = "round"; ctx.lineJoin = "round";
+
+        // ---- Trunk: thẳng đứng từ đất lên fork ----
+        ctx.beginPath();
+        ctx.moveTo(rx, ry);
+        ctx.bezierCurveTo(rx + 4*MOBILE_SCALE, ry - 40*MOBILE_SCALE,
+                          fx - 2*MOBILE_SCALE, fy + 30*MOBILE_SCALE, fx, fy);
+        ctx.strokeStyle = "#3d1f08"; ctx.lineWidth = 13 * MOBILE_SCALE; ctx.stroke();
+        ctx.strokeStyle = "#5c2e0e"; ctx.lineWidth = 8 * MOBILE_SCALE; ctx.stroke();
+        ctx.strokeStyle = "rgba(120,70,30,0.25)"; ctx.lineWidth = 3 * MOBILE_SCALE; ctx.stroke();
+
+        // ---- Main branch: từ fork vươn ngang sang phải, đầu cành cong nhẹ lên ----
+        const cp1x = fx + (tx - fx) * 0.4, cp1y = fy - 10 * MOBILE_SCALE + sway * 0.3;
+        const cp2x = fx + (tx - fx) * 0.75, cp2y = ty + 15 * MOBILE_SCALE + sway * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(fx, fy);
+        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, tx, ty);
+        ctx.strokeStyle = "#3d1f08"; ctx.lineWidth = 9 * MOBILE_SCALE; ctx.stroke();
+        ctx.strokeStyle = "#5c2e0e"; ctx.lineWidth = 5 * MOBILE_SCALE; ctx.stroke();
+        ctx.strokeStyle = "rgba(120,70,30,0.2)"; ctx.lineWidth = 2 * MOBILE_SCALE; ctx.stroke();
+
+        // ---- Cành nhỏ rẽ lên tại fork ----
+        ctx.beginPath();
+        ctx.moveTo(fx, fy);
+        ctx.bezierCurveTo(fx - 8*MOBILE_SCALE, fy - 30*MOBILE_SCALE,
+                          fx - 5*MOBILE_SCALE, fy - 58*MOBILE_SCALE,
+                          fx + 8*MOBILE_SCALE, fy - 70*MOBILE_SCALE + sway);
+        ctx.strokeStyle = "#3d1f08"; ctx.lineWidth = 5 * MOBILE_SCALE; ctx.stroke();
+        ctx.strokeStyle = "#5c2e0e"; ctx.lineWidth = 2.5 * MOBILE_SCALE; ctx.stroke();
+
+        // ---- Cành nhỏ rủ xuống giữa thân ----
+        const sb2t = 0.55;
+        const sb2x = (1-sb2t)**3*fx + 3*(1-sb2t)**2*sb2t*cp1x + 3*(1-sb2t)*sb2t**2*cp2x + sb2t**3*tx;
+        const sb2y = (1-sb2t)**3*fy + 3*(1-sb2t)**2*sb2t*cp1y + 3*(1-sb2t)*sb2t**2*cp2y + sb2t**3*ty;
+        ctx.beginPath();
+        ctx.moveTo(sb2x, sb2y);
+        ctx.bezierCurveTo(sb2x - 10*MOBILE_SCALE, sb2y + 14*MOBILE_SCALE,
+                          sb2x - 18*MOBILE_SCALE, sb2y + 28*MOBILE_SCALE,
+                          sb2x - 14*MOBILE_SCALE, sb2y + 38*MOBILE_SCALE + sway*0.4);
+        ctx.strokeStyle = "#3d1f08"; ctx.lineWidth = 3.5 * MOBILE_SCALE; ctx.stroke();
+        ctx.strokeStyle = "#5c2e0e"; ctx.lineWidth = 1.5 * MOBILE_SCALE; ctx.stroke();
+
+        // ---- Lá nhỏ ----
+        const leaves = [
+          { lx: fx + 6*MOBILE_SCALE,   ly: fy - 68*MOBILE_SCALE + sway, angle: -0.3, sz: 9*MOBILE_SCALE },
+          { lx: fx - 4*MOBILE_SCALE,   ly: fy - 52*MOBILE_SCALE + sway, angle:  0.7, sz: 7*MOBILE_SCALE },
+          { lx: sb2x - 12*MOBILE_SCALE, ly: sb2y + 36*MOBILE_SCALE + sway*0.4, angle: 2.0, sz: 8*MOBILE_SCALE },
+          { lx: tx - 16*MOBILE_SCALE + sway, ly: ty - 4*MOBILE_SCALE, angle: -1.3, sz: 7*MOBILE_SCALE },
+        ];
+        leaves.forEach(l => {
+          ctx.save();
+          ctx.translate(l.lx, l.ly);
+          ctx.rotate(l.angle + sway * 0.03);
+          ctx.beginPath();
+          ctx.ellipse(0, -l.sz * 0.65, l.sz * 0.35, l.sz, 0, 0, Math.PI*2);
+          ctx.fillStyle = "rgba(15,48,14,0.90)";
+          ctx.fill();
+          ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -l.sz * 1.2);
+          ctx.strokeStyle = "rgba(35,80,28,0.38)"; ctx.lineWidth = 0.7; ctx.stroke();
+          ctx.restore();
+        });
+
+        ctx.restore();
       }
 
       function drawButterfly(x, y, size, flapAngle, alpha) {
@@ -261,87 +235,34 @@
           ctx.rotate(flapAngle * 0.55);
           ctx.beginPath();
           ctx.moveTo(0, 0);
-          ctx.bezierCurveTo(
-            size * 0.3,
-            -size * 0.55,
-            size * 0.95,
-            -size * 0.44,
-            size,
-            0,
-          );
-          ctx.bezierCurveTo(
-            size * 0.9,
-            size * 0.2,
-            size * 0.3,
-            size * 0.1,
-            0,
-            0,
-          );
-          const ug = ctx.createRadialGradient(
-            size * 0.4,
-            -size * 0.2,
-            0,
-            size * 0.4,
-            -size * 0.2,
-            size * 0.9,
-          );
-          ug.addColorStop(0, "rgba(160,255,230,0.92)");
-          ug.addColorStop(0.5, "rgba(30,180,150,0.85)");
-          ug.addColorStop(1, "rgba(0,100,90,0.60)");
-          ctx.fillStyle = ug;
-          ctx.fill();
+          ctx.bezierCurveTo(size*0.3, -size*0.55, size*0.95, -size*0.44, size, 0);
+          ctx.bezierCurveTo(size*0.9, size*0.2, size*0.3, size*0.1, 0, 0);
+          const ug = ctx.createRadialGradient(size*0.4,-size*0.2,0,size*0.4,-size*0.2,size*0.9);
+          ug.addColorStop(0,"rgba(160,255,230,0.92)");
+          ug.addColorStop(0.5,"rgba(30,180,150,0.85)");
+          ug.addColorStop(1,"rgba(0,100,90,0.60)");
+          ctx.fillStyle = ug; ctx.fill();
           ctx.beginPath();
           ctx.moveTo(0, 0);
-          ctx.bezierCurveTo(
-            size * 0.25,
-            size * 0.1,
-            size * 0.6,
-            size * 0.05,
-            size * 0.55,
-            size * 0.45,
-          );
-          ctx.bezierCurveTo(
-            size * 0.4,
-            size * 0.65,
-            size * 0.1,
-            size * 0.5,
-            0,
-            0,
-          );
-          const lg = ctx.createRadialGradient(
-            size * 0.25,
-            size * 0.3,
-            0,
-            size * 0.25,
-            size * 0.3,
-            size * 0.5,
-          );
-          lg.addColorStop(0, "rgba(100,230,200,0.88)");
-          lg.addColorStop(1, "rgba(0,120,100,0.55)");
-          ctx.fillStyle = lg;
-          ctx.fill();
+          ctx.bezierCurveTo(size*0.25,size*0.1,size*0.6,size*0.05,size*0.55,size*0.45);
+          ctx.bezierCurveTo(size*0.4,size*0.65,size*0.1,size*0.5,0,0);
+          const lg = ctx.createRadialGradient(size*0.25,size*0.3,0,size*0.25,size*0.3,size*0.5);
+          lg.addColorStop(0,"rgba(100,230,200,0.88)");
+          lg.addColorStop(1,"rgba(0,120,100,0.55)");
+          ctx.fillStyle = lg; ctx.fill();
           ctx.restore();
         });
         ctx.beginPath();
-        ctx.ellipse(0, 0, size * 0.07, size * 0.38, 0, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(0,60,50,0.9)";
-        ctx.fill();
-        [-1, 1].forEach((sx) => {
+        ctx.ellipse(0,0,size*0.07,size*0.38,0,0,Math.PI*2);
+        ctx.fillStyle = "rgba(0,60,50,0.9)"; ctx.fill();
+        [-1,1].forEach((sx) => {
           ctx.beginPath();
-          ctx.moveTo(sx * size * 0.04, -size * 0.32);
-          ctx.quadraticCurveTo(
-            sx * size * 0.3,
-            -size * 0.7,
-            sx * size * 0.22,
-            -size * 0.85,
-          );
-          ctx.strokeStyle = "rgba(0,120,100,0.8)";
-          ctx.lineWidth = size * 0.04;
-          ctx.stroke();
+          ctx.moveTo(sx*size*0.04,-size*0.32);
+          ctx.quadraticCurveTo(sx*size*0.3,-size*0.7,sx*size*0.22,-size*0.85);
+          ctx.strokeStyle="rgba(0,120,100,0.8)"; ctx.lineWidth=size*0.04; ctx.stroke();
           ctx.beginPath();
-          ctx.arc(sx * size * 0.22, -size * 0.88, size * 0.06, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(160,255,220,0.9)";
-          ctx.fill();
+          ctx.arc(sx*size*0.22,-size*0.88,size*0.06,0,Math.PI*2);
+          ctx.fillStyle="rgba(160,255,220,0.9)"; ctx.fill();
         });
         ctx.globalAlpha = 1;
         ctx.restore();
@@ -353,19 +274,13 @@
       // ---- HOVER FIREFLIES ----
       const hoverFireflies = [];
       function spawnHoverFirefly(fx, fy) {
-        const angle = -Math.PI * 0.5 + (Math.random() - 0.5) * Math.PI * 1.5,
-          spd = 0.12 + Math.random() * 0.3;
+        const angle = -Math.PI*0.5+(Math.random()-0.5)*Math.PI*1.5, spd=0.12+Math.random()*0.3;
         hoverFireflies.push({
-          x: fx + (Math.random() - 0.5) * 30,
-          y: fy + (Math.random() - 0.5) * 20,
-          vx: Math.cos(angle) * spd,
-          vy: Math.sin(angle) * spd - 0.1,
-          r: 1.5 + Math.random() * 2.2,
-          phase: Math.random() * Math.PI * 2,
-          blinkSpd: 0.06 + Math.random() * 0.08,
-          hue: 40 + Math.random() * 40,
-          life: 1.0,
-          decay: 0.002 + Math.random() * 0.003,
+          x: fx+(Math.random()-0.5)*30, y: fy+(Math.random()-0.5)*20,
+          vx: Math.cos(angle)*spd, vy: Math.sin(angle)*spd-0.1,
+          r: 1.5+Math.random()*2.2, phase: Math.random()*Math.PI*2,
+          blinkSpd: 0.06+Math.random()*0.08, hue: 40+Math.random()*40,
+          life: 1.0, decay: 0.002+Math.random()*0.003,
         });
       }
       let hoverFireflyTimer = 0;
@@ -385,13 +300,13 @@
         ctx.beginPath();
         const blobCount = Math.round(w / (h * 0.9));
         for (let i = 0; i <= blobCount; i++) {
-          const bx = x - w / 2 + (w / blobCount) * i;
+          const bx = x - w/2 + (w / blobCount) * i;
           const by = y + (i % 2 === 0 ? 0 : h * 0.15);
           const br = h * (0.5 + (i % 3 === 0 ? 0.2 : 0));
           ctx.moveTo(bx + br, by);
           ctx.arc(bx, by, br, 0, Math.PI * 2);
         }
-        const cg = ctx.createRadialGradient(x, y - h * 0.2, 0, x, y, w * 0.5);
+        const cg = ctx.createRadialGradient(x, y - h*0.2, 0, x, y, w * 0.5);
         cg.addColorStop(0, "rgba(200,210,255,0.55)");
         cg.addColorStop(0.6, "rgba(160,175,230,0.28)");
         cg.addColorStop(1, "rgba(100,120,200,0.04)");
@@ -413,11 +328,11 @@
 
         // Sky gradient - deep night sky
         const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
-        skyGrad.addColorStop(0, "#0a0a2e");
+        skyGrad.addColorStop(0,   "#0a0a2e");
         skyGrad.addColorStop(0.3, "#0d1a4a");
         skyGrad.addColorStop(0.6, "#1a2a5e");
-        skyGrad.addColorStop(0.85, "#2d1b4e");
-        skyGrad.addColorStop(1, "#1a0a2a");
+        skyGrad.addColorStop(0.85,"#2d1b4e");
+        skyGrad.addColorStop(1,   "#1a0a2a");
         ctx.fillStyle = skyGrad;
         ctx.fillRect(0, 0, W, H);
 
@@ -437,55 +352,27 @@
         }
 
         // Moon
-        const moonX = W * 0.82,
-          moonY = H * 0.14,
-          moonR = W * 0.045;
+        const moonX = W * 0.82, moonY = H * 0.14, moonR = W * 0.045;
         ctx.save();
-        const moonGlow = ctx.createRadialGradient(
-          moonX,
-          moonY,
-          0,
-          moonX,
-          moonY,
-          moonR * 5,
-        );
+        const moonGlow = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY, moonR * 5);
         moonGlow.addColorStop(0, "rgba(255,245,200,0.18)");
         moonGlow.addColorStop(0.4, "rgba(220,210,160,0.07)");
         moonGlow.addColorStop(1, "transparent");
         ctx.fillStyle = moonGlow;
-        ctx.beginPath();
-        ctx.arc(moonX, moonY, moonR * 5, 0, Math.PI * 2);
-        ctx.fill();
-        const moonG = ctx.createRadialGradient(
-          moonX - moonR * 0.25,
-          moonY - moonR * 0.25,
-          0,
-          moonX,
-          moonY,
-          moonR,
-        );
+        ctx.beginPath(); ctx.arc(moonX, moonY, moonR * 5, 0, Math.PI * 2); ctx.fill();
+        const moonG = ctx.createRadialGradient(moonX - moonR*0.25, moonY - moonR*0.25, 0, moonX, moonY, moonR);
         moonG.addColorStop(0, "rgba(255,252,220,1)");
         moonG.addColorStop(0.6, "rgba(255,240,180,0.97)");
         moonG.addColorStop(1, "rgba(220,200,140,0.9)");
-        ctx.beginPath();
-        ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
-        ctx.fillStyle = moonG;
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+        ctx.fillStyle = moonG; ctx.fill();
         // Moon shadow crescent
-        ctx.beginPath();
-        ctx.arc(
-          moonX + moonR * 0.3,
-          moonY - moonR * 0.1,
-          moonR * 0.85,
-          0,
-          Math.PI * 2,
-        );
-        ctx.fillStyle = "rgba(15,20,60,0.55)";
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(moonX + moonR*0.3, moonY - moonR*0.1, moonR * 0.85, 0, Math.PI*2);
+        ctx.fillStyle = "rgba(15,20,60,0.55)"; ctx.fill();
         ctx.restore();
 
         // Clouds (slow drifting)
-        clouds.forEach((c) => {
+        clouds.forEach(c => {
           c.x += c.spd;
           if (c.x > W + c.w * 0.6) c.x = -c.w * 0.6;
           ctx.save();
@@ -495,24 +382,19 @@
         });
 
         // Horizon glow
-        const horizGrad = ctx.createLinearGradient(
-          0,
-          groundY - H * 0.18,
-          0,
-          groundY,
-        );
+        const horizGrad = ctx.createLinearGradient(0, groundY - H*0.18, 0, groundY);
         horizGrad.addColorStop(0, "transparent");
         horizGrad.addColorStop(0.5, "rgba(80,40,120,0.18)");
         horizGrad.addColorStop(1, "rgba(40,15,70,0.45)");
         ctx.fillStyle = horizGrad;
-        ctx.fillRect(0, groundY - H * 0.18, W, H * 0.18);
+        ctx.fillRect(0, groundY - H*0.18, W, H*0.18);
 
         // Treeline silhouette - ngăn cách trời và cỏ
         const treelineY = GRASS_TOP;
         ctx.save();
         ctx.beginPath();
         // Solid dark ground base
-        ctx.rect(0, treelineY + H * 0.04, W, H);
+        ctx.rect(0, treelineY + H*0.04, W, H);
         ctx.fillStyle = "rgba(8,18,8,0.92)";
         ctx.fill();
         ctx.restore();
@@ -524,37 +406,32 @@
           const tw = 14 + Math.abs(Math.sin(tx * 0.053)) * 10;
           // Tree top (triangle/cone)
           ctx.beginPath();
-          ctx.moveTo(tx, treelineY + H * 0.04);
-          ctx.lineTo(tx - tw, treelineY + H * 0.04 + th * 0.5);
-          ctx.lineTo(tx + tw, treelineY + H * 0.04 + th * 0.5);
+          ctx.moveTo(tx, treelineY + H*0.04);
+          ctx.lineTo(tx - tw, treelineY + H*0.04 + th * 0.5);
+          ctx.lineTo(tx + tw, treelineY + H*0.04 + th * 0.5);
           ctx.closePath();
           ctx.fill();
           ctx.beginPath();
-          ctx.moveTo(tx, treelineY + H * 0.04 - th * 0.5);
-          ctx.lineTo(tx - tw * 0.75, treelineY + H * 0.04 + th * 0.15);
-          ctx.lineTo(tx + tw * 0.75, treelineY + H * 0.04 + th * 0.15);
+          ctx.moveTo(tx, treelineY + H*0.04 - th * 0.5);
+          ctx.lineTo(tx - tw * 0.75, treelineY + H*0.04 + th * 0.15);
+          ctx.lineTo(tx + tw * 0.75, treelineY + H*0.04 + th * 0.15);
           ctx.closePath();
           ctx.fill();
           ctx.beginPath();
-          ctx.moveTo(tx, treelineY + H * 0.04 - th);
-          ctx.lineTo(tx - tw * 0.5, treelineY + H * 0.04 - th * 0.3);
-          ctx.lineTo(tx + tw * 0.5, treelineY + H * 0.04 - th * 0.3);
+          ctx.moveTo(tx, treelineY + H*0.04 - th);
+          ctx.lineTo(tx - tw * 0.5, treelineY + H*0.04 - th * 0.3);
+          ctx.lineTo(tx + tw * 0.5, treelineY + H*0.04 - th * 0.3);
           ctx.closePath();
           ctx.fill();
         }
         ctx.restore();
         // Fog band ngay trên treeline
-        const fogGrad = ctx.createLinearGradient(
-          0,
-          treelineY - H * 0.04,
-          0,
-          treelineY + H * 0.06,
-        );
+        const fogGrad = ctx.createLinearGradient(0, treelineY - H*0.04, 0, treelineY + H*0.06);
         fogGrad.addColorStop(0, "transparent");
         fogGrad.addColorStop(0.5, "rgba(60,80,100,0.18)");
         fogGrad.addColorStop(1, "rgba(20,30,40,0.35)");
         ctx.fillStyle = fogGrad;
-        ctx.fillRect(0, treelineY - H * 0.04, W, H * 0.1);
+        ctx.fillRect(0, treelineY - H*0.04, W, H*0.10);
 
         const sw = Math.sin(t * 0.55) * 2.8;
 
@@ -564,15 +441,11 @@
           curHoverType = "butterfly";
           if (bt.landed && !btFly.active && !btHoverTriggered) {
             btHoverTriggered = true;
-            btFly.active = true;
-            btFly.phase = "away";
-            btFly.awayT = 0;
-            btFly.returnT = 0;
-            btFly.startX = bt.x;
-            btFly.startY = bt.y;
-            const ang = Math.random() * Math.PI * 2;
-            btFly.awayX = btTarget.x + Math.cos(ang) * W * 0.22;
-            btFly.awayY = btTarget.y - H * 0.18 - Math.random() * H * 0.12;
+            btFly.active = true; btFly.phase = "away"; btFly.awayT = 0; btFly.returnT = 0;
+            btFly.startX = bt.x; btFly.startY = bt.y;
+            const ang = Math.random()*Math.PI*2;
+            btFly.awayX = btTarget.x + Math.cos(ang)*W*0.22;
+            btFly.awayY = btTarget.y - H*0.18 - Math.random()*H*0.12;
           }
         } else {
           if (curHoverType !== "butterfly") btHoverTriggered = false;
@@ -583,9 +456,9 @@
             if (!lastWave || Math.abs(grassHit.sx - lastWave.x) > 18)
               grassWaves.push({ x: grassHit.sx, t: 0 });
             hoverFireflyTimer++;
-            if (hoverFireflyTimer % 3 === 0) {
-              spawnHoverFirefly(grassHit.sx, groundY - 30 - Math.random() * 60);
-              spawnHoverFirefly(grassHit.sx, groundY - 30 - Math.random() * 60);
+            if (hoverFireflyTimer % 4 === 0) {
+              spawnFirefly(grassHit.sx);
+              if (Math.random() < 0.5) spawnFirefly(grassHit.sx);
             }
           }
         }
@@ -599,203 +472,123 @@
         // Background grass
         bgBlades.forEach((b) => {
           const ripple = getGrassRipple(cx + b.x);
-          drawGrass(
-            cx + b.x,
-            groundY,
-            b.h,
-            b.lean + Math.sin(t * 0.5 + b.phase) * 4,
-            b.lw,
-            `rgba(${30 + Math.round(b.alpha * 20)},${90 + Math.round(b.alpha * 40)},${25 + Math.round(b.alpha * 15)},${b.alpha})`,
-            ripple * 0.3,
-          );
+          drawGrass(cx+b.x, groundY, b.h, b.lean+Math.sin(t*0.5+b.phase)*4, b.lw,
+            `rgba(${30+Math.round(b.alpha*20)},${90+Math.round(b.alpha*40)},${25+Math.round(b.alpha*15)},${b.alpha})`, ripple*0.3);
         });
         // Mid grass
         midBlades.forEach((b) => {
           const ripple = getGrassRipple(cx + b.x);
-          drawGrass(
-            cx + b.x,
-            groundY,
-            b.h,
-            b.lean + Math.sin(t * 0.6 + b.phase) * 5,
-            b.lw,
-            `rgba(${45 + Math.round(b.alpha * 25)},${130 + Math.round(b.alpha * 40)},${35 + Math.round(b.alpha * 20)},${b.alpha})`,
-            ripple * 0.5,
-          );
+          drawGrass(cx+b.x, groundY, b.h, b.lean+Math.sin(t*0.6+b.phase)*5, b.lw,
+            `rgba(${45+Math.round(b.alpha*25)},${130+Math.round(b.alpha*40)},${35+Math.round(b.alpha*20)},${b.alpha})`, ripple*0.5);
         });
         // Foreground grass
         fgBlades.forEach((b) => {
           const ripple = getGrassRipple(cx + b.x);
-          drawGrass(
-            cx + b.x,
-            groundY,
-            b.h,
-            b.lean + Math.sin(t * 0.7 + b.phase) * 6,
-            b.lw,
-            `rgba(${60 + Math.round(b.alpha * 20)},${160 + Math.round(b.alpha * 30)},${45 + Math.round(b.alpha * 20)},${b.alpha})`,
-            ripple * 0.8,
-          );
+          drawGrass(cx+b.x, groundY, b.h, b.lean+Math.sin(t*0.7+b.phase)*6, b.lw,
+            `rgba(${60+Math.round(b.alpha*20)},${160+Math.round(b.alpha*30)},${45+Math.round(b.alpha*20)},${b.alpha})`, ripple*0.8);
         });
 
-        // Fireflies - clipped to grass zone
+        // Fireflies - clipped to grass zone, life-based
         ctx.save();
         ctx.beginPath();
         ctx.rect(0, GRASS_TOP, W, H - GRASS_TOP);
         ctx.clip();
-        fireflies.forEach((f) => {
+        for (let i = fireflies.length - 1; i >= 0; i--) {
+          const f = fireflies[i];
           f.phase += f.blinkSpd;
-          f.x += f.vx + Math.sin(f.phase * 0.7) * 0.1;
-          f.y += f.vy + Math.cos(f.phase * 0.5) * 0.08;
+          f.x += f.vx + Math.sin(f.phase*0.7)*0.10;
+          f.y += f.vy + Math.cos(f.phase*0.5)*0.08;
+          f.vx *= 0.998; f.vy *= 0.998;
           if (f.x < 0 || f.x > W) f.vx *= -1;
-          if (f.y < GRASS_TOP) {
-            f.y = GRASS_TOP;
-            f.vy = Math.abs(f.vy) * 0.8;
-          }
-          if (f.y > groundY - 8) {
-            f.y = groundY - 8;
-            f.vy = -Math.abs(f.vy) * 0.8;
-          }
-          const gl = Math.sin(f.phase) * 0.5 + 0.5,
-            fa = gl * 0.92,
-            glR = f.r * 5 + gl * 10;
-          if (fa < 0.01) return;
-          const og = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, glR);
-          og.addColorStop(0, `hsla(${f.hue},100%,75%,${fa * 0.55})`);
-          og.addColorStop(0.4, `hsla(${f.hue},100%,65%,${fa * 0.18})`);
-          og.addColorStop(1, "transparent");
-          ctx.fillStyle = og;
-          ctx.beginPath();
-          ctx.arc(f.x, f.y, glR, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.arc(f.x, f.y, f.r * gl + 0.4, 0, Math.PI * 2);
-          ctx.fillStyle = `hsla(${f.hue},100%,92%,${fa})`;
-          ctx.shadowColor = `hsla(${f.hue},80%,80%,0.9)`;
-          ctx.shadowBlur = 12;
-          ctx.fill();
-        });
+          if (f.y < GRASS_TOP) { f.y = GRASS_TOP; f.vy = Math.abs(f.vy)*0.6; }
+          if (f.y > groundY - 8) { f.y = groundY - 8; f.vy = -Math.abs(f.vy)*0.6; }
+          f.life -= f.decay;
+          if (f.life <= 0) { fireflies.splice(i, 1); continue; }
+          const gl = Math.sin(f.phase)*0.5+0.5, fa = gl * f.life * 0.92, glR = f.r*5+gl*10;
+          if (fa < 0.01) continue;
+          const og = ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,glR);
+          og.addColorStop(0,`hsla(${f.hue},100%,75%,${fa*0.55})`);
+          og.addColorStop(0.4,`hsla(${f.hue},100%,65%,${fa*0.18})`);
+          og.addColorStop(1,"transparent");
+          ctx.fillStyle=og; ctx.beginPath(); ctx.arc(f.x,f.y,glR,0,Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.arc(f.x,f.y,f.r*gl+0.4,0,Math.PI*2);
+          ctx.fillStyle=`hsla(${f.hue},100%,92%,${fa})`;
+          ctx.shadowColor=`hsla(${f.hue},80%,80%,0.9)`; ctx.shadowBlur=12; ctx.fill();
+        }
         ctx.restore();
 
         // Hover fireflies
-        for (let i = hoverFireflies.length - 1; i >= 0; i--) {
+        for (let i = hoverFireflies.length-1; i >= 0; i--) {
           const f = hoverFireflies[i];
           f.phase += f.blinkSpd;
-          f.x += f.vx + Math.sin(f.phase * 0.8) * 0.1;
-          f.y += f.vy + Math.cos(f.phase * 0.6) * 0.08;
-          f.vx *= 0.992;
-          f.vy *= 0.992;
-          f.vy += 0.001;
+          f.x += f.vx + Math.sin(f.phase*0.8)*0.1;
+          f.y += f.vy + Math.cos(f.phase*0.6)*0.08;
+          f.vx *= 0.992; f.vy *= 0.992; f.vy += 0.001;
           f.life -= f.decay;
-          if (f.life <= 0) {
-            hoverFireflies.splice(i, 1);
-            continue;
-          }
-          const gl = Math.sin(f.phase) * 0.5 + 0.5,
-            fa = gl * f.life * 0.95,
-            glR = f.r * 6 + gl * 12;
+          if (f.life <= 0) { hoverFireflies.splice(i,1); continue; }
+          const gl = Math.sin(f.phase)*0.5+0.5, fa = gl*f.life*0.95, glR = f.r*6+gl*12;
           ctx.save();
-          const og = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, glR);
-          og.addColorStop(0, `hsla(${f.hue},100%,80%,${fa * 0.6})`);
-          og.addColorStop(0.5, `hsla(${f.hue},100%,65%,${fa * 0.2})`);
-          og.addColorStop(1, "transparent");
-          ctx.fillStyle = og;
-          ctx.beginPath();
-          ctx.arc(f.x, f.y, glR, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.arc(f.x, f.y, f.r * gl + 0.5, 0, Math.PI * 2);
-          ctx.fillStyle = `hsla(${f.hue},100%,95%,${fa})`;
-          ctx.shadowColor = `hsla(${f.hue},100%,80%,0.95)`;
-          ctx.shadowBlur = 14;
-          ctx.fill();
+          const og = ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,glR);
+          og.addColorStop(0,`hsla(${f.hue},100%,80%,${fa*0.6})`);
+          og.addColorStop(0.5,`hsla(${f.hue},100%,65%,${fa*0.2})`);
+          og.addColorStop(1,"transparent");
+          ctx.fillStyle=og; ctx.beginPath(); ctx.arc(f.x,f.y,glR,0,Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.arc(f.x,f.y,f.r*gl+0.5,0,Math.PI*2);
+          ctx.fillStyle=`hsla(${f.hue},100%,95%,${fa})`;
+          ctx.shadowColor=`hsla(${f.hue},100%,80%,0.95)`; ctx.shadowBlur=14; ctx.fill();
           ctx.restore();
         }
 
         // Butterfly logic
-        btFlapSpeed +=
-          (btFly.active || !bt.landed ? 8.0 : 1.2 - btFlapSpeed) * 0.08;
+        btFlapSpeed += (btFly.active||!bt.landed ? 8.0 : 1.2 - btFlapSpeed) * 0.08;
 
         if (!bt.landed) {
-          bt.pathT = Math.min(bt.pathT + 0.016 / 4.5, 1);
+          bt.pathT = Math.min(bt.pathT + 0.016/4.5, 1);
           const tt = bt.pathT;
-          bt.x =
-            (1 - tt) ** 3 * (-W * 0.1) +
-            3 * (1 - tt) ** 2 * tt * (cx - W * 0.18) +
-            3 * (1 - tt) * tt ** 2 * (cx + W * 0.12) +
-            tt ** 3 * btTarget.x;
-          bt.y =
-            (1 - tt) ** 3 * (H * 0.35) +
-            3 * (1 - tt) ** 2 * tt * (groundY - H * 0.35) +
-            3 * (1 - tt) * tt ** 2 * (groundY - H * 0.18) +
-            tt ** 3 * btTarget.y;
-          bt.x += Math.sin(t * 1.2) * 12 * (1 - tt);
-          bt.y += Math.cos(t * 0.9) * 8 * (1 - tt);
-          btTrail.push({ x: bt.x, y: bt.y, age: 0 });
-          if (btTrail.length > 120) btTrail.shift();
+          bt.x = (1-tt)**3*(-W*0.1)+3*(1-tt)**2*tt*(cx-W*0.18)+3*(1-tt)*tt**2*(cx+W*0.12)+tt**3*btTarget.x;
+          bt.y = (1-tt)**3*(H*0.35)+3*(1-tt)**2*tt*(groundY-H*0.35)+3*(1-tt)*tt**2*(groundY-H*0.18)+tt**3*btTarget.y;
+          bt.x += Math.sin(t*1.2)*12*(1-tt);
+          bt.y += Math.cos(t*0.9)*8*(1-tt);
+          btTrail.push({x:bt.x,y:bt.y,age:0});
+          if (btTrail.length>120) btTrail.shift();
           if (bt.pathT >= 1) bt.landed = true;
         } else if (btFly.active) {
           if (btFly.phase === "away") {
-            btFly.awayT = Math.min(btFly.awayT + 0.016 / 1.0, 1);
-            const tt = btFly.awayT,
-              ease = easeInOut(tt);
-            bt.x =
-              btFly.startX +
-              (btFly.awayX - btFly.startX) * ease +
-              Math.sin(tt * Math.PI * 3) * 16;
-            bt.y =
-              btFly.startY +
-              (btFly.awayY - btFly.startY) * ease +
-              Math.cos(tt * Math.PI * 2) * 12;
-            if (btFly.awayT >= 1) {
-              btFly.phase = "return";
-              btFly.returnT = 0;
-            }
+            btFly.awayT = Math.min(btFly.awayT+0.016/1.0,1);
+            const tt=btFly.awayT, ease=easeInOut(tt);
+            bt.x = btFly.startX+(btFly.awayX-btFly.startX)*ease+Math.sin(tt*Math.PI*3)*16;
+            bt.y = btFly.startY+(btFly.awayY-btFly.startY)*ease+Math.cos(tt*Math.PI*2)*12;
+            if (btFly.awayT>=1) { btFly.phase="return"; btFly.returnT=0; }
           } else {
-            btFly.returnT = Math.min(btFly.returnT + 0.016 / 1.2, 1);
-            const tt = btFly.returnT,
-              ease = easeInOut(tt);
-            bt.x =
-              btFly.awayX +
-              (btTarget.x - btFly.awayX) * ease +
-              Math.sin(tt * Math.PI * 4) * 10;
-            bt.y =
-              btFly.awayY +
-              (btTarget.y - btFly.awayY) * ease +
-              Math.cos(tt * Math.PI * 3) * 8;
-            if (btFly.returnT >= 1) {
-              btFly.active = false;
-              bt.x = btTarget.x;
-              bt.y = btTarget.y;
-              btHoverTriggered = false;
+            btFly.returnT = Math.min(btFly.returnT+0.016/1.2,1);
+            const tt=btFly.returnT, ease=easeInOut(tt);
+            bt.x = btFly.awayX+(btTarget.x-btFly.awayX)*ease+Math.sin(tt*Math.PI*4)*10;
+            bt.y = btFly.awayY+(btTarget.y-btFly.awayY)*ease+Math.cos(tt*Math.PI*3)*8;
+            if (btFly.returnT>=1) {
+              btFly.active=false; bt.x=btTarget.x; bt.y=btTarget.y; btHoverTriggered=false;
             }
           }
-          btTrail.push({ x: bt.x, y: bt.y, age: 0 });
-          if (btTrail.length > 120) btTrail.shift();
+          btTrail.push({x:bt.x,y:bt.y,age:0});
+          if (btTrail.length>120) btTrail.shift();
         } else {
           bt.landedT += 0.016;
-          bt.x = btTarget.x + Math.sin(bt.landedT * 0.8) * 3;
-          bt.y = btTarget.y + Math.sin(bt.landedT * 1.2) * 2;
+          bt.x = btTarget.x + Math.sin(bt.landedT*0.8)*3;
+          bt.y = btTarget.y + Math.sin(bt.landedT*1.2)*2;
         }
 
+        // Branch
+        drawBranch();
+
         // Trail
-        btTrail.forEach((p) => (p.age += 0.016));
-        if (btTrail.length > 1) {
-          for (let i = 1; i < btTrail.length; i++) {
-            const p0 = btTrail[i - 1],
-              p1 = btTrail[i];
-            const a = Math.max(0, 1 - p1.age / 2.5) * 0.55,
-              lw = Math.max(0, 1 - p1.age / 2.5) * 3.5;
-            if (a < 0.01) continue;
-            ctx.save();
-            ctx.beginPath();
-            ctx.moveTo(p0.x, p0.y);
-            ctx.lineTo(p1.x, p1.y);
-            ctx.strokeStyle = `rgba(100,255,210,${a})`;
-            ctx.lineWidth = lw;
-            ctx.lineCap = "round";
-            ctx.shadowColor = "rgba(80,220,180,0.8)";
-            ctx.shadowBlur = 8;
-            ctx.stroke();
-            ctx.restore();
+        btTrail.forEach(p=>p.age+=0.016);
+        if (btTrail.length>1) {
+          for (let i=1;i<btTrail.length;i++) {
+            const p0=btTrail[i-1],p1=btTrail[i];
+            const a=Math.max(0,1-p1.age/2.5)*0.55, lw=Math.max(0,1-p1.age/2.5)*3.5;
+            if (a<0.01) continue;
+            ctx.save(); ctx.beginPath(); ctx.moveTo(p0.x,p0.y); ctx.lineTo(p1.x,p1.y);
+            ctx.strokeStyle=`rgba(100,255,210,${a})`; ctx.lineWidth=lw; ctx.lineCap="round";
+            ctx.shadowColor="rgba(80,220,180,0.8)"; ctx.shadowBlur=8; ctx.stroke(); ctx.restore();
           }
         }
 
@@ -803,85 +596,42 @@
         bt.phase += btFlapSpeed * 0.016;
         const flying = btFly.active;
         const isEnteringOrFlying = flying || !bt.landed;
-        const flapAng = !isEnteringOrFlying
-          ? Math.sin(bt.phase) * 0.2 - 0.05
-          : Math.sin(bt.phase) * 0.7;
+        const flapAng = !isEnteringOrFlying ? Math.sin(bt.phase)*0.2-0.05 : Math.sin(bt.phase)*0.7;
         drawButterfly(bt.x, bt.y, bt.size, flapAng, 1);
 
         if (flying) {
           ctx.save();
-          const aur = ctx.createRadialGradient(
-            bt.x,
-            bt.y,
-            0,
-            bt.x,
-            bt.y,
-            bt.size * 3.5,
-          );
-          aur.addColorStop(
-            0,
-            `rgba(100,255,220,${0.15 + Math.sin(t * 3) * 0.05})`,
-          );
-          aur.addColorStop(0.5, "rgba(60,200,180,0.07)");
-          aur.addColorStop(1, "transparent");
-          ctx.fillStyle = aur;
-          ctx.beginPath();
-          ctx.arc(bt.x, bt.y, bt.size * 3.5, 0, Math.PI * 2);
-          ctx.fill();
+          const aur = ctx.createRadialGradient(bt.x,bt.y,0,bt.x,bt.y,bt.size*3.5);
+          aur.addColorStop(0,`rgba(100,255,220,${0.15+Math.sin(t*3)*0.05})`);
+          aur.addColorStop(0.5,"rgba(60,200,180,0.07)");
+          aur.addColorStop(1,"transparent");
+          ctx.fillStyle=aur; ctx.beginPath(); ctx.arc(bt.x,bt.y,bt.size*3.5,0,Math.PI*2); ctx.fill();
           ctx.restore();
         }
 
         // Cursor trail
-        cursorTrail.push({
-          x: mousePos.x,
-          y: mousePos.y,
-          age: 0,
-          hue: 300 + Math.sin(t * 2) * 40,
-          r: 3 + Math.sin(t * 3) * 1.5,
-        });
-        for (let i = cursorTrail.length - 1; i >= 0; i--) {
-          const p = cursorTrail[i];
-          p.age += 0.016;
-          const life = Math.max(0, 1 - p.age / 0.7);
-          if (life <= 0) {
-            cursorTrail.splice(i, 1);
-            continue;
-          }
+        cursorTrail.push({ x:mousePos.x, y:mousePos.y, age:0, hue:300+Math.sin(t*2)*40, r:3+Math.sin(t*3)*1.5 });
+        for (let i=cursorTrail.length-1;i>=0;i--) {
+          const p=cursorTrail[i]; p.age+=0.016;
+          const life=Math.max(0,1-p.age/0.7);
+          if (life<=0){cursorTrail.splice(i,1);continue;}
           ctx.save();
-          const grd = ctx.createRadialGradient(
-            p.x,
-            p.y,
-            0,
-            p.x,
-            p.y,
-            p.r * 6 * life,
-          );
-          grd.addColorStop(0, `hsla(${p.hue},100%,80%,${life * 0.25})`);
-          grd.addColorStop(1, "transparent");
-          ctx.fillStyle = grd;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.r * 6 * life, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.r * life, 0, Math.PI * 2);
-          ctx.fillStyle = `hsla(${p.hue},100%,90%,${life * 0.9})`;
-          ctx.shadowColor = `hsla(${p.hue},100%,75%,1)`;
-          ctx.shadowBlur = 12 * life;
-          ctx.fill();
-          ctx.restore();git init
-
+          const grd=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*6*life);
+          grd.addColorStop(0,`hsla(${p.hue},100%,80%,${life*0.25})`);
+          grd.addColorStop(1,"transparent");
+          ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(p.x,p.y,p.r*6*life,0,Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.arc(p.x,p.y,p.r*life,0,Math.PI*2);
+          ctx.fillStyle=`hsla(${p.hue},100%,90%,${life*0.9})`;
+          ctx.shadowColor=`hsla(${p.hue},100%,75%,1)`; ctx.shadowBlur=12*life; ctx.fill();
+          ctx.restore();
         }
-        if (cursorTrail.length > 80)
-          cursorTrail.splice(0, cursorTrail.length - 80);
+        if (cursorTrail.length>80) cursorTrail.splice(0,cursorTrail.length-80);
 
         t += 0.016;
         requestAnimationFrame(draw);
       }
 
-      window.addEventListener("resize", () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-      });
+      window.addEventListener("resize", () => { canvas.width=window.innerWidth; canvas.height=window.innerHeight; });
       draw();
     </script>
   </body>
