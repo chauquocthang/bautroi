@@ -1,1089 +1,1653 @@
 <!doctype html>
 <html>
-<head>
-  <meta charset="UTF-8"/>
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box;}
-    body{background:#000;overflow:hidden;font-family:Georgia,serif;cursor:none;}
-    canvas{display:block;position:fixed;inset:0;}
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: #000;
+        overflow: hidden;
+        font-family: Georgia, serif;
+        cursor: none;
+      }
+      canvas {
+        display: block;
+        position: fixed;
+        inset: 0;
+      }
 
-    #custom-cursor{
-      position:fixed;width:14px;height:14px;border-radius:50%;
-      background:radial-gradient(circle,rgba(255,180,220,0.95)0%,rgba(255,100,160,0.6)60%,transparent 100%);
-      pointer-events:none;z-index:9999;transform:translate(-50%,-50%);
-      box-shadow:0 0 12px rgba(255,120,180,0.8),0 0 24px rgba(255,80,150,0.4);
-      transition:width .15s,height .15s;
-    }
-    #custom-cursor.hover-dog{width:22px;height:22px;background:radial-gradient(circle,rgba(255,210,120,0.95)0%,rgba(220,150,40,0.6)60%,transparent 100%);box-shadow:0 0 16px rgba(255,190,60,0.9),0 0 32px rgba(200,130,20,0.5);}
-    #custom-cursor.hover-flower{width:20px;height:20px;background:radial-gradient(circle,rgba(255,240,100,0.95)0%,rgba(255,180,50,0.6)60%,transparent 100%);box-shadow:0 0 16px rgba(255,200,60,0.9),0 0 32px rgba(255,150,30,0.5);}
-    #hover-hint{position:fixed;pointer-events:none;z-index:9998;font-family:Georgia,serif;font-size:12px;color:rgba(255,220,240,0.9);text-shadow:0 0 10px rgba(255,100,160,0.8);transform:translate(-50%,-130%);white-space:nowrap;opacity:0;transition:opacity .3s ease;background:rgba(0,0,0,0.5);padding:3px 10px;border-radius:20px;border:1px solid rgba(255,120,180,0.3);}
-    #hover-hint.show{opacity:1;}
+      #custom-cursor {
+        position: fixed;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 180, 220, 0.95) 0%,
+          rgba(255, 100, 160, 0.6) 60%,
+          transparent 100%
+        );
+        pointer-events: none;
+        z-index: 9999;
+        transform: translate(-50%, -50%);
+        box-shadow:
+          0 0 12px rgba(255, 120, 180, 0.8),
+          0 0 24px rgba(255, 80, 150, 0.4);
+        transition:
+          width 0.15s,
+          height 0.15s;
+      }
+      #custom-cursor.hover-dog {
+        width: 22px;
+        height: 22px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 210, 120, 0.95) 0%,
+          rgba(220, 150, 40, 0.6) 60%,
+          transparent 100%
+        );
+        box-shadow:
+          0 0 16px rgba(255, 190, 60, 0.9),
+          0 0 32px rgba(200, 130, 20, 0.5);
+      }
+      #custom-cursor.hover-flower {
+        width: 20px;
+        height: 20px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 240, 100, 0.95) 0%,
+          rgba(255, 180, 50, 0.6) 60%,
+          transparent 100%
+        );
+        box-shadow:
+          0 0 16px rgba(255, 200, 60, 0.9),
+          0 0 32px rgba(255, 150, 30, 0.5);
+      }
+      #hover-hint {
+        position: fixed;
+        pointer-events: none;
+        z-index: 9998;
+        font-family: Georgia, serif;
+        font-size: 12px;
+        color: rgba(255, 220, 240, 0.9);
+        text-shadow: 0 0 10px rgba(255, 100, 160, 0.8);
+        transform: translate(-50%, -130%);
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 3px 10px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 120, 180, 0.3);
+      }
+      #hover-hint.show {
+        opacity: 1;
+      }
 
-    /* CARD */
-    #card{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;background:radial-gradient(ellipse at center,rgba(80,0,30,0.97)0%,rgba(0,0,0,0.99)100%);transition:opacity 1.2s ease;}
-    #card.hide{opacity:0;pointer-events:none;}
-    #card-rose{font-size:clamp(48px,12vw,96px);animation:float 3s ease-in-out infinite;}
-    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
-    #card h1{font-size:clamp(22px,6vw,52px);color:#ffd0e8;letter-spacing:4px;text-align:center;text-shadow:0 0 30px rgba(255,100,160,1),0 0 60px rgba(255,60,120,0.6);}
-    #card p{font-size:clamp(13px,2.8vw,20px);color:rgba(255,200,225,0.82);text-align:center;line-height:1.9;padding:0 30px;max-width:480px;}
-    #open-btn{margin-top:8px;padding:14px 48px;border:none;border-radius:40px;cursor:none;font-family:Georgia,serif;font-size:clamp(14px,2.5vw,18px);letter-spacing:1px;color:#1a0010;background:linear-gradient(135deg,#ffadd4,#ff6eaa);box-shadow:0 0 28px rgba(255,90,150,0.75);transition:transform .15s,box-shadow .15s;}
-    #open-btn:hover{transform:scale(1.07);box-shadow:0 0 44px rgba(255,90,150,1);}
+      /* CARD */
+      #card {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        background: radial-gradient(
+          ellipse at center,
+          rgba(80, 0, 30, 0.97) 0%,
+          rgba(0, 0, 0, 0.99) 100%
+        );
+        transition: opacity 1.2s ease;
+      }
+      #card.hide {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #card-rose {
+        font-size: clamp(48px, 12vw, 96px);
+        animation: float 3s ease-in-out infinite;
+      }
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-12px);
+        }
+      }
+      #card h1 {
+        font-size: clamp(22px, 6vw, 52px);
+        color: #ffd0e8;
+        letter-spacing: 4px;
+        text-align: center;
+        text-shadow:
+          0 0 30px rgba(255, 100, 160, 1),
+          0 0 60px rgba(255, 60, 120, 0.6);
+      }
+      #card p {
+        font-size: clamp(13px, 2.8vw, 20px);
+        color: rgba(255, 200, 225, 0.82);
+        text-align: center;
+        line-height: 1.9;
+        padding: 0 30px;
+        max-width: 480px;
+      }
+      #open-btn {
+        margin-top: 8px;
+        padding: 14px 48px;
+        border: none;
+        border-radius: 40px;
+        cursor: none;
+        font-family: Georgia, serif;
+        font-size: clamp(14px, 2.5vw, 18px);
+        letter-spacing: 1px;
+        color: #1a0010;
+        background: linear-gradient(135deg, #ffadd4, #ff6eaa);
+        box-shadow: 0 0 28px rgba(255, 90, 150, 0.75);
+        transition:
+          transform 0.15s,
+          box-shadow 0.15s;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+      }
+      #open-btn:hover, #open-btn:active {
+        transform: scale(1.07);
+        box-shadow: 0 0 44px rgba(255, 90, 150, 1);
+      }
 
-    /* ENV SCENE - HTML envelope shown after dog places it */
-    #env-scene{position:fixed;inset:0;z-index:15;pointer-events:none;opacity:0;transition:opacity .4s ease;}
-    #env-scene.show{opacity:1;}
-    #env-scene.show #env-wrapper{pointer-events:all;}
-    #env-wrapper{position:absolute;transform:translateX(-50%);width:clamp(249px,42vw,349px);transition:none;}
-    #letter-peek-zone{position:absolute;inset:0;overflow:visible;pointer-events:none;z-index:6;}
-    #env-body{position:relative;width:100%;padding-top:53.33%;overflow:visible;}
-    #flap-g{transform-origin:50% 0%;transition:transform 1.6s cubic-bezier(0.4,0,0.2,1);}
-    #env-scene.opened #flap-g{transform:rotateX(-175deg);}
-    #letter-wrap{position:absolute;left:0;width:100%;bottom:0;height:auto;min-height:55%;z-index:6;opacity:0;transform:translateY(0%);transition:opacity .6s ease .5s,transform .8s cubic-bezier(0.4,0,0.6,1) 0s;pointer-events:none;}
-    #env-scene.opened #letter-wrap{opacity:1;transform:translateY(5%);transition:opacity .3s ease 1.5s,transform 1s cubic-bezier(0.22,0.85,0.28,1) 1.5s;}
-    #letter-paper{position:absolute;inset:0;width:100%;height:100%;background:linear-gradient(160deg,#fffcfa 0%,#fff5f8 55%,#ffeef4 100%);border-radius:8px;border:1px solid rgba(255,180,210,0.5);box-shadow:0 -6px 24px rgba(200,60,110,0.25),inset 0 0 14px rgba(255,200,220,0.12);overflow:hidden;}
-    #letter-paper::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,rgba(255,140,185,0.4),rgba(255,100,160,0.9),rgba(255,140,185,0.4));border-radius:5px 5px 0 0;}
-    #letter-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:14px 14px 12px;text-align:center;pointer-events:none;width:100%;}
-    #letter-content .lc-rose{font-size:clamp(24px,6vw,32px);line-height:1.3;}
-    #letter-content .lc-title{font-size:clamp(16px,4vw,22px);color:#c0305a;letter-spacing:1.5px;font-family:Georgia,serif;line-height:1.4;font-weight:bold;}
-    #letter-content .lc-body{font-size:clamp(13px,3vw,17px);color:rgba(120,30,60,0.85);line-height:1.7;font-family:Georgia,serif;}
-    #letter-content .lc-divider{width:55%;height:1px;background:linear-gradient(90deg,transparent,rgba(220,100,150,0.5),transparent);margin:3px 0;}
+      /* ENV SCENE */
+      #env-scene {
+        position: fixed;
+        inset: 0;
+        z-index: 15;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+      }
+      #env-scene.show {
+        opacity: 1;
+      }
+      #env-scene.show #env-wrapper {
+        pointer-events: all;
+      }
+      #env-wrapper {
+        position: absolute;
+        transform: translateX(-50%);
+        width: clamp(249px, 42vw, 349px);
+        transition: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+      }
+      #letter-peek-zone {
+        position: absolute;
+        inset: 0;
+        overflow: visible;
+        pointer-events: none;
+        z-index: 6;
+      }
+      #env-body {
+        position: relative;
+        width: 100%;
+        padding-top: 53.33%;
+        overflow: visible;
+      }
+      #flap-g {
+        transform-origin: 50% 0%;
+        transition: transform 1.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      #env-scene.opened #flap-g {
+        transform: rotateX(-175deg);
+      }
+      #letter-wrap {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        bottom: 0;
+        height: auto;
+        min-height: 55%;
+        z-index: 6;
+        opacity: 0;
+        transform: translateY(0%);
+        transition:
+          opacity 0.6s ease 0.5s,
+          transform 0.8s cubic-bezier(0.4, 0, 0.6, 1) 0s;
+        pointer-events: none;
+      }
+      #env-scene.opened #letter-wrap {
+        opacity: 1;
+        transform: translateY(5%);
+        transition:
+          opacity 0.3s ease 1.5s,
+          transform 1s cubic-bezier(0.22, 0.85, 0.28, 1) 1.5s;
+      }
+      #letter-paper {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          160deg,
+          #fffcfa 0%,
+          #fff5f8 55%,
+          #ffeef4 100%
+        );
+        border-radius: 8px;
+        border: 1px solid rgba(255, 180, 210, 0.5);
+        box-shadow:
+          0 -6px 24px rgba(200, 60, 110, 0.25),
+          inset 0 0 14px rgba(255, 200, 220, 0.12);
+        overflow: hidden;
+      }
+      #letter-paper::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(
+          90deg,
+          rgba(255, 140, 185, 0.4),
+          rgba(255, 100, 160, 0.9),
+          rgba(255, 140, 185, 0.4)
+        );
+        border-radius: 5px 5px 0 0;
+      }
+      #letter-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 14px 14px 12px;
+        text-align: center;
+        pointer-events: none;
+        width: 100%;
+      }
+      #letter-content .lc-rose {
+        font-size: clamp(24px, 6vw, 32px);
+        line-height: 1.3;
+      }
+      #letter-content .lc-title {
+        font-size: clamp(16px, 4vw, 22px);
+        color: #c0305a;
+        letter-spacing: 1.5px;
+        font-family: Georgia, serif;
+        line-height: 1.4;
+        font-weight: bold;
+      }
+      #letter-content .lc-body {
+        font-size: clamp(13px, 3vw, 17px);
+        color: rgba(120, 30, 60, 0.85);
+        line-height: 1.7;
+        font-family: Georgia, serif;
+      }
+      #letter-content .lc-divider {
+        width: 55%;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(220, 100, 150, 0.5),
+          transparent
+        );
+        margin: 3px 0;
+      }
 
-    #env-hint{position:fixed;color:#ffd0e8;font-size:clamp(14px,3vw,18px);font-family:Georgia,serif;white-space:nowrap;text-shadow:0 0 14px rgba(255,80,150,0.9),0 0 30px rgba(255,60,130,0.6),0 2px 4px rgba(0,0,0,0.9);opacity:0;transition:opacity .8s ease;letter-spacing:.5px;z-index:20;transform:translateX(-50%) translateY(9px);pointer-events:none;}
-    #env-hint.visible{opacity:1;animation:pulse 2s ease-in-out infinite;}
-    @keyframes pulse{0%,100%{opacity:.7}50%{opacity:1}}
+      #env-hint {
+        position: fixed;
+        color: #ffd0e8;
+        font-size: clamp(14px, 3vw, 18px);
+        font-family: Georgia, serif;
+        white-space: nowrap;
+        text-shadow:
+          0 0 14px rgba(255, 80, 150, 0.9),
+          0 0 30px rgba(255, 60, 130, 0.6),
+          0 2px 4px rgba(0, 0, 0, 0.9);
+        opacity: 0;
+        transition: opacity 0.8s ease;
+        letter-spacing: 0.5px;
+        z-index: 20;
+        transform: translateX(-50%) translateY(9px);
+        pointer-events: none;
+      }
+      #env-hint.visible {
+        opacity: 1;
+        animation: pulse 2s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 0.7;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
 
+      /* Mobile touch hint */
+      #touch-hint {
+        position: fixed;
+        bottom: 28px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: rgba(255, 200, 230, 0.6);
+        font-size: 13px;
+        font-family: Georgia, serif;
+        text-align: center;
+        pointer-events: none;
+        z-index: 30;
+        opacity: 0;
+        transition: opacity 1s ease;
+        text-shadow: 0 0 10px rgba(255, 100, 160, 0.5);
+      }
+      #touch-hint.show {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="custom-cursor"></div>
+    <div id="hover-hint"></div>
 
-  </style>
-</head>
-<body>
-  <div id="custom-cursor"></div>
-  <div id="hover-hint"></div>
+    <div id="card">
+      <div id="card-rose">🌸</div>
+      <h1>Chúc Mừng 8 Tháng 3</h1>
+      <p>
+        Kính gửi những người phụ nữ tuyệt vời —<br />luôn rạng rỡ, yêu đời và
+        đáng được trân trọng 💖
+      </p>
+      <button id="open-btn" onclick="openCard()">Mở thiệp</button>
+    </div>
 
-  <div id="card">
-    <div id="card-rose">🌸</div>
-    <h1>Chúc Mừng 8 Tháng 3</h1>
-    <p>Kính gửi những người phụ nữ tuyệt vời —<br/>luôn rạng rỡ, yêu đời và đáng được trân trọng 💖</p>
-    <button id="open-btn" onclick="openCard()">Mở thiệp</button>
-  </div>
+    <div id="touch-hint">Chạm vào màn hình để tương tác ✨</div>
 
-  <div id="env-scene">
-    <div id="env-hint">Nhấn vào để mở thư</div>
-    <div id="env-wrapper">
-      <div id="env-body">
-        <div id="letter-peek-zone">
-          <div id="letter-wrap">
-            <div id="letter-paper"></div>
-            <div id="letter-content">
-              <div class="lc-rose">🌸</div>
-              <div class="lc-title">Chúc Mừng 8 Tháng 3</div>
-              <div class="lc-divider"></div>
-              <div class="lc-body">Kính gửi những người phụ nữ<br/>tuyệt vời trong cuộc đời —<br/>Cảm ơn vì sự dịu dàng,<br/>mạnh mẽ và yêu thương<br/>mà bạn mang lại mỗi ngày 💕</div>
-              <div class="lc-divider"></div>
-              <div class="lc-rose" style="font-size:clamp(12px,2.5vw,18px)">💌</div>
+    <div id="env-scene">
+      <div id="env-hint">Nhấn vào để mở thư</div>
+      <div id="env-wrapper">
+        <div id="env-body">
+          <div id="letter-peek-zone">
+            <div id="letter-wrap">
+              <div id="letter-paper"></div>
+              <div id="letter-content">
+                <div class="lc-rose">🌸</div>
+                <div class="lc-title">Chúc Mừng 8 Tháng 3</div>
+                <div class="lc-divider"></div>
+                <div class="lc-body">
+                  Kính gửi những người phụ nữ<br />tuyệt vời trong cuộc đời —<br />Cảm
+                  ơn vì sự dịu dàng,<br />mạnh mẽ và yêu thương<br />mà bạn mang
+                  lại mỗi ngày 💕
+                </div>
+                <div class="lc-divider"></div>
+                <div
+                  class="lc-rose"
+                  style="font-size: clamp(12px, 2.5vw, 18px)"
+                >
+                  💌
+                </div>
+              </div>
             </div>
           </div>
+          <svg
+            id="env-front"
+            viewBox="0 0 300 160"
+            onclick="clickEnvelope()"
+            xmlns="http://www.w3.org/2000/svg"
+            style="
+              position: absolute;
+              inset: 0;
+              width: 100%;
+              height: 100%;
+              z-index: 5;
+              cursor: none;
+            "
+          >
+            <rect
+              x="3"
+              y="3"
+              width="294"
+              height="154"
+              rx="10"
+              fill="rgba(130,20,65,0.18)"
+              stroke="rgba(60,3,25,0.9)"
+              stroke-width="2.5"
+            />
+            <path d="M3,157 L150,90 L297,157 Z" fill="rgba(90,8,40,0.97)" />
+            <path d="M3,3 L3,157 L150,90 Z" fill="rgba(110,12,55,0.92)" />
+            <path d="M297,3 L297,157 L150,90 Z" fill="rgba(110,12,55,0.92)" />
+          </svg>
+          <svg
+            id="env-flap"
+            viewBox="0 0 300 160"
+            xmlns="http://www.w3.org/2000/svg"
+            style="
+              position: absolute;
+              inset: 0;
+              width: 100%;
+              height: 100%;
+              z-index: 12;
+              pointer-events: none;
+            "
+          >
+            <defs>
+              <linearGradient id="fG2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgba(210,55,108,0.99)" />
+                <stop offset="100%" stop-color="rgba(148,24,72,0.97)" />
+              </linearGradient>
+            </defs>
+            <g id="flap-g">
+              <path d="M3,3 L150,88 L297,3 Z" fill="url(#fG2)" />
+              <path
+                d="M3,3 L150,88 L297,3 Z"
+                fill="none"
+                stroke="rgba(60,3,25,0.9)"
+                stroke-width="2"
+              />
+              <line
+                x1="3"
+                y1="3"
+                x2="297"
+                y2="3"
+                stroke="rgba(180,40,90,0.6)"
+                stroke-width="1.5"
+              />
+            </g>
+          </svg>
         </div>
-        <svg id="env-front" viewBox="0 0 300 160" onclick="clickEnvelope()" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%;z-index:5;cursor:none;">
-          <rect x="3" y="3" width="294" height="154" rx="10" fill="rgba(130,20,65,0.18)" stroke="rgba(60,3,25,0.9)" stroke-width="2.5"/>
-          <path d="M3,157 L150,90 L297,157 Z" fill="rgba(90,8,40,0.97)"/>
-          <path d="M3,3 L3,157 L150,90 Z" fill="rgba(110,12,55,0.92)"/>
-          <path d="M297,3 L297,157 L150,90 Z" fill="rgba(110,12,55,0.92)"/>
-        </svg>
-        <svg id="env-flap" viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%;z-index:12;pointer-events:none;">
-          <defs><linearGradient id="fG2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(210,55,108,0.99)"/><stop offset="100%" stop-color="rgba(148,24,72,0.97)"/></linearGradient></defs>
-          <g id="flap-g">
-            <path d="M3,3 L150,88 L297,3 Z" fill="url(#fG2)"/>
-            <path d="M3,3 L150,88 L297,3 Z" fill="none" stroke="rgba(60,3,25,0.9)" stroke-width="2"/>
-            <line x1="3" y1="3" x2="297" y2="3" stroke="rgba(180,40,90,0.6)" stroke-width="1.5"/>
-          </g>
-        </svg>
       </div>
     </div>
-  </div>
 
-  <canvas id="c"></canvas>
+    <canvas id="c"></canvas>
 
-<script>
-const canvas=document.getElementById("c");
-const ctx=canvas.getContext("2d");
-canvas.width=window.innerWidth; canvas.height=window.innerHeight;
-const W=canvas.width,H=canvas.height,CX=W/2,groundY=H*0.96;
-const isMobile=W<600;
-const MS=isMobile?1.5:1;
+    <script>
+      const canvas = document.getElementById("c");
+      const ctx = canvas.getContext("2d");
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const W = canvas.width,
+        H = canvas.height,
+        CX = W / 2,
+        groundY = H * 0.96;
+      const isMobile = W < 600;
+      const MS = isMobile ? 1.5 : 1;
 
-let t=0,phase="card",growStart=0,btStart=0;
-const GROW_DUR=32;
-const mousePos={x:-999,y:-999};
-const cursorEl=document.getElementById("custom-cursor");
-const hintEl=document.getElementById("hover-hint");
-window.addEventListener("mousemove",e=>{mousePos.x=e.clientX;mousePos.y=e.clientY;cursorEl.style.left=e.clientX+"px";cursorEl.style.top=e.clientY+"px";hintEl.style.left=e.clientX+"px";hintEl.style.top=e.clientY+"px";});
-function setCursorHover(type,txt){cursorEl.className=type?`hover-${type}`:"";if(txt){hintEl.textContent=txt;hintEl.classList.add("show");}else hintEl.classList.remove("show");}
+      // ---- DETECT TOUCH DEVICE ----
+      const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-// ---- ENVELOPE SLIDE STATE (từ phải sang) ----
-const envSlide={
-  active:false,
-  x:0, y:0,           // vị trí hiện tại (canvas)
-  startX:0,           // bắt đầu ngoài màn hình bên phải
-  finalX:0, finalY:0, // vị trí đặt xuống cuối
-  tilt:0,
-  w:0, h:0,
-};
-function getEnvSize(){const vw=window.innerWidth;const w=Math.min(Math.max(249,(vw*42)/100),349);return{w,h:w*0.5333};}
+      let t = 0,
+        phase = "card",
+        growStart = 0,
+        btStart = 0;
+      const GROW_DUR = 32;
+      const mousePos = { x: -999, y: -999 };
+      const cursorEl = document.getElementById("custom-cursor");
+      const hintEl = document.getElementById("hover-hint");
 
-// ---- ENVIRONMENT ----
-function makeRng(s){let v=s;return()=>{v=(v*16807)%2147483647;return(v-1)/2147483646;};}
-function genBlades(n,seed,hMin,hMax,lMax,aMin,aMax,sx){
-  const rng=makeRng(seed),b=[];
-  for(let i=0;i<n;i++){
-    // tốc độ mọc riêng: nhanh=0.3s, chậm=2.5s
-    const growDur=0.3+rng()*2.2;
-    // easing style: 0=bật nhanh rồi chậm, 1=đều, 2=giật 2 nhịp
-    const easingType=Math.floor(rng()*3);
-    // delay rải rộng hơn và phi tuyến — tạo nhóm mọc lác đác
-    const rawDelay=rng();
-    const delay=(rawDelay<0.3)?rawDelay*1.5 : (rawDelay<0.7)?1.0+rawDelay*4 : 3.5+rawDelay*5;
-    b.push({x:(rng()-0.5)*sx,h:hMin+rng()*(hMax-hMin),lean:(rng()-0.5)*lMax*2,
-      lw:0.7+rng()*1.0,alpha:aMin+rng()*(aMax-aMin),phase:rng()*Math.PI*2,
-      delay, growDur, easingType});
-  }
-  return b;
-}
-const bMin=isMobile?285:65,bMax=isMobile?355:135;
-const mMin=isMobile?275:55,mMax=isMobile?320:100;
-const fMin=isMobile?250:30,fMax=isMobile?285:65;
-const bgBlades=genBlades(120,42,bMin*MS,bMax*MS,40,0.3,0.55,W*1.1);
-const midBlades=genBlades(140,77,mMin*MS,mMax*MS,38,0.4,0.65,W*1.05);
-const fgBlades=genBlades(160,13,fMin*MS,fMax*MS,36,0.5,0.82,W*1.1);
-
-const SC=isMobile?12:20,SHB=isMobile?260:250,SHR=isMobile?130:250,SSP=isMobile?54:100;
-const SLF=isMobile?1.8:0.8,SLR=isMobile?50:5,SCURVE=isMobile?0.35:-0.6;
-const FLB=isMobile?17:12,FLR=isMobile?10:12;
-function genStems(seed){
-  const rng=makeRng(seed),arr=[];
-  for(let i=0;i<SC;i++){
-    const ox=(rng()-0.5)*SSP*MS;const h=(SHB+rng()*SHR)*MS;
-    const lean=ox*SLF+(rng()-0.5)*SLR*MS;const lw=(1.5+rng()*1.5)*MS;
-    const flSz=(FLB+rng()*FLR)*MS;
-    const lc=(isMobile?2:0)+Math.floor(rng()*((isMobile?4:5)-(isMobile?2:0)+1));
-    const leaves=[];
-    for(let j=0;j<lc;j++){const side=j%2===0?-1:1;leaves.push({t:0.25+j*(0.55/lc),side,len:(20+rng()*18)*MS,ang:(0.45+rng()*0.25)*side,dark:j===lc-1});}
-    const rawDelay=rng();
-    const delay=(rawDelay<0.25)?rawDelay*0.8 : (rawDelay<0.6)?0.8+rawDelay*3.5 : 3.0+rawDelay*6;
-    const growDur=0.5+rng()*2.5;
-    const easingType=Math.floor(rng()*3);
-    arr.push({ox,h,lean,lw,flSz,leaves,swayFactor:0.5+rng()*0.8,swayFreq:0.45+rng()*0.35,swayPhase:rng()*Math.PI*2,delay,growDur,easingType,curve:SCURVE});
-  }
-  arr.sort((a,b)=>a.lean-b.lean);return arr;
-}
-const stems=genStems(99);
-const tallest=stems.reduce((a,b)=>a.h>b.h?a:b);
-const dogTarget={x:CX+tallest.ox+tallest.lean,y:groundY};
-
-const sparks=Array.from({length:50},()=>({x:CX+(Math.random()-0.5)*300*MS,y:groundY-80*MS-Math.random()*280*MS,r:Math.random()*1.6+0.3,phase:Math.random()*Math.PI*2,spd:Math.random()*0.018+0.006}));
-const fireflies=Array.from({length:28},()=>({x:CX+(Math.random()-0.5)*W*0.85,y:groundY,targetY:groundY-30-Math.random()*(H*0.65),vx:(Math.random()-0.5)*0.12,vy:-(Math.random()*0.18+0.08),r:Math.random()*2.2+1.2,phase:Math.random()*Math.PI*2,blinkSpd:Math.random()*0.04+0.02,hue:50+Math.random()*30,risen:false}));
-const burstParticles=[],hoverFireflies=[],grassWaves=[];
-const bushShake={active:false,t:0,intensity:0};
-
-// hoa mini mọc trên cỏ khi hover
-const grassFlowers=[];  // {bx, tipX, tipY, prog, hue, born}
-let grassHoverTimer=0;
-let flowerHoverTimer=0;
-
-// ---- HOA MINI TRÊN CỎ (hover) ----
-function drawMiniFlower(x,y,sz,prog,hue){
-  if(prog<=0)return;
-  ctx.save();ctx.translate(x,y);
-  const fp=easeOut(Math.min(prog,1));
-  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-sz*1.6*fp);
-  ctx.strokeStyle=`rgba(40,130,30,${fp*0.9})`;ctx.lineWidth=sz*0.18;ctx.lineCap="round";ctx.stroke();
-  if(fp>0.35){
-    const bf=easeOut((fp-0.35)/0.65);
-    for(let i=0;i<5;i++){
-      const a=(i/5)*Math.PI*2-Math.PI/2;
-      ctx.save();ctx.translate(0,-sz*1.6*fp);ctx.rotate(a);
-      ctx.beginPath();ctx.ellipse(sz*0.55*bf,0,sz*0.55*bf,sz*0.3*bf,0,0,Math.PI*2);
-      ctx.fillStyle=`hsla(${hue},90%,78%,${fp*0.9})`;ctx.fill();
-      ctx.restore();
-    }
-    ctx.beginPath();ctx.arc(0,-sz*1.6*fp,sz*0.27*bf,0,Math.PI*2);
-    ctx.fillStyle=`hsla(${hue+35},100%,92%,${fp})`;ctx.shadowColor=`hsla(${hue},80%,70%,0.6)`;ctx.shadowBlur=6*bf;ctx.fill();ctx.shadowBlur=0;
-  }
-  ctx.restore();
-}
-
-// ---- BƯỚM ----
-const butterflies=[];
-const BUTTERFLY_COLORS=[
-  {wing1:[255,180,220],wing2:[255,120,170],body:[180,60,100]},  // hồng
-  {wing1:[255,220,120],wing2:[255,170,60],body:[160,90,20]},    // vàng cam
-  {wing1:[200,160,255],wing2:[140,90,230],body:[80,30,140]},    // tím
-  {wing1:[160,230,255],wing2:[80,180,230],body:[20,90,150]},    // xanh dương
-  {wing1:[180,255,180],wing2:[90,200,100],body:[20,100,40]},    // xanh lá
-];
-let butterflySpawnTimer=0;
-let butterfliesEnabled=false; // bật sau khi hoa đầu tiên nở
-
-function spawnButterfly(nearX, nearY){
-  const col=BUTTERFLY_COLORS[Math.floor(Math.random()*BUTTERFLY_COLORS.length)];
-  const angle=Math.random()*Math.PI*2;
-  const orbitR=40+Math.random()*120;
-  butterflies.push({
-    // vị trí + quỹ đạo
-    cx: nearX+(Math.random()-0.5)*80,  // tâm quỹ đạo
-    cy: nearY-20-Math.random()*60,
-    orbitR,
-    orbitRY: orbitR*0.4,               // elipse dẹt theo chiều đứng
-    angle,
-    speed: (0.4+Math.random()*0.7)*(Math.random()<0.5?1:-1), // chiều bay
-    // drift tự do
-    driftX:0, driftY:0,
-    driftPhaseX: Math.random()*Math.PI*2,
-    driftPhaseY: Math.random()*Math.PI*2,
-    driftSpd: 0.008+Math.random()*0.012,
-    // cánh
-    flapPhase: Math.random()*Math.PI*2,
-    flapSpd: 2.5+Math.random()*2.0,    // tốc độ đập cánh
-    sz: (6+Math.random()*7)*MS,
-    col,
-    alpha:0,                           // fade in
-    life:1.0,
-    born: t,
-    leavingAt: 8+Math.random()*20,     // giây trước khi bay đi
-    leaving:false,
-    leaveVX:(Math.random()-0.5)*0.8,
-    leaveVY:-(0.2+Math.random()*0.4),
-  });
-}
-
-function drawButterfly(bfly){
-  const {cx,cy,angle,orbitR,orbitRY,flapPhase,sz,col,alpha}=bfly;
-  const bx=cx+Math.cos(angle)*orbitR;
-  const by=cy+Math.sin(angle)*orbitRY;
-
-  // flap: 0=cánh mở, 1=cánh khép
-  const flap=Math.abs(Math.sin(flapPhase));
-  const wingW=sz*(0.3+flap*0.8);
-  const wingH=sz*(0.55+flap*0.15);
-  const tilt=Math.sin(angle)*0.25; // nghiêng nhẹ theo quỹ đạo
-
-  ctx.save();
-  ctx.translate(bx,by);
-  ctx.rotate(tilt);
-  ctx.globalAlpha=alpha;
-
-  const r1=col.wing1, r2=col.wing2, rb=col.body;
-
-  // cánh trái trên
-  ctx.save();ctx.scale(-1,1);
-  _drawWing(wingW,wingH,sz,r1,r2,alpha);
-  ctx.restore();
-  // cánh phải trên
-  _drawWing(wingW,wingH,sz,r1,r2,alpha);
-  // cánh trái dưới (nhỏ hơn)
-  ctx.save();ctx.scale(-1,1);
-  _drawWing(wingW*0.65,wingH*0.75,sz*0.7,r2,r1,alpha,sz*0.15);
-  ctx.restore();
-  // cánh phải dưới
-  _drawWing(wingW*0.65,wingH*0.75,sz*0.7,r2,r1,alpha,sz*0.15);
-
-  // thân
-  ctx.beginPath();
-  ctx.ellipse(0,0,sz*0.08,sz*0.38,0,0,Math.PI*2);
-  ctx.fillStyle=`rgba(${rb[0]},${rb[1]},${rb[2]},${alpha*0.95})`;
-  ctx.fill();
-  // đầu
-  ctx.beginPath();ctx.arc(0,-sz*0.35,sz*0.1,0,Math.PI*2);
-  ctx.fillStyle=`rgba(${rb[0]},${rb[1]},${rb[2]},${alpha})`;ctx.fill();
-  // râu
-  for(let s=-1;s<=1;s+=2){
-    ctx.beginPath();
-    ctx.moveTo(s*sz*0.06,-sz*0.4);
-    ctx.quadraticCurveTo(s*sz*0.25,-sz*0.65,s*sz*0.18,-sz*0.78);
-    ctx.strokeStyle=`rgba(${rb[0]},${rb[1]},${rb[2]},${alpha*0.8})`;
-    ctx.lineWidth=0.8;ctx.stroke();
-    ctx.beginPath();ctx.arc(s*sz*0.18,-sz*0.78,sz*0.045,0,Math.PI*2);
-    ctx.fillStyle=`rgba(${rb[0]},${rb[1]},${rb[2]},${alpha*0.9})`;ctx.fill();
-  }
-  ctx.restore();
-}
-
-function _drawWing(ww,wh,sz,c1,c2,alpha,yOff=0){
-  ctx.save();ctx.translate(0,yOff);
-  ctx.beginPath();
-  ctx.moveTo(0,0);
-  ctx.bezierCurveTo(ww*0.3,-wh*0.5,ww*1.1,-wh*0.8,ww*1.0,-wh*0.2);
-  ctx.bezierCurveTo(ww*0.9,wh*0.3,ww*0.4,wh*0.25,0,0);
-  const g=ctx.createRadialGradient(ww*0.4,-wh*0.3,0,ww*0.4,-wh*0.3,ww*1.2);
-  g.addColorStop(0,`rgba(${c1[0]},${c1[1]},${c1[2]},${alpha*0.92})`);
-  g.addColorStop(0.5,`rgba(${c2[0]},${c2[1]},${c2[2]},${alpha*0.75})`);
-  g.addColorStop(1,`rgba(${c2[0]},${c2[1]},${c2[2]},${alpha*0.1})`);
-  ctx.fillStyle=g;ctx.fill();
-  // viền mỏng
-  ctx.strokeStyle=`rgba(${c2[0]},${c2[1]},${c2[2]},${alpha*0.3})`;
-  ctx.lineWidth=0.6;ctx.stroke();
-  ctx.restore();
-}
-let prevHoverType=null;
-
-// ---- DOG ----
-const DOG_SPEED=isMobile?1.2:1.0;
-const DOG_RET=isMobile?1.5:1.2;
-const dog={x:-W*0.1,y:groundY,pathT:0,landed:false,notified:false,tailWag:0,legPhase:0,
-  isCarrying:false,facingLeft:false,_restX:CX+W*0.18,size:(Math.max(14,W*0.035)+8)*MS,landedT:0};
-const dogFly={active:false,phase:"away",awayT:0,returnT:0,startX:0,startY:0,awayX:0,awayY:0,
-  landT:0,landStartX:0};
-let dogLandedOnFlower=false,dogHoverTriggered=false;
-const pawPrints=[];let lastPawX=-9999;
-
-function spawnPawPrint(x,y){pawPrints.push({x,y,life:1.0,decay:0.004+Math.random()*0.003});}
-
-// ---- ROPE ----
-// The rope connects dog mouth to envelope corner
-const rope={points:[],active:false};
-function initRope(x1,y1,x2,y2,n=18){
-  rope.points=[];
-  for(let i=0;i<=n;i++){
-    const tt=i/n;
-    rope.points.push({x:x1+(x2-x1)*tt,y:y1+(y2-y1)*tt,vx:0,vy:0,pinned:false});
-  }
-  rope.points[0].pinned=true; // dog mouth
-  rope.active=true;
-}
-function updateRope(ax,ay,bx,by){
-  if(!rope.points.length)return;
-  const N=rope.points.length-1;
-  // pin ends
-  rope.points[0].x=ax;rope.points[0].y=ay;
-  rope.points[N].x=bx;rope.points[N].y=by;
-  const SEG=Math.sqrt((bx-ax)**2+(by-ay)**2)/N;
-  // verlet
-  for(let i=1;i<N;i++){
-    const p=rope.points[i];
-    const px=p.x,py=p.y;
-    p.x+=p.vx*0.9;
-    p.y+=p.vy*0.9+0.12; // gravity
-    p.vx=p.x-px;p.vy=p.y-py;
-  }
-  // constraints
-  for(let iter=0;iter<8;iter++){
-    for(let i=0;i<N;i++){
-      const a=rope.points[i],b=rope.points[i+1];
-      const dx=b.x-a.x,dy=b.y-a.y;
-      const dist=Math.sqrt(dx*dx+dy*dy)||0.001;
-      const diff=(dist-SEG)/dist*0.5;
-      if(!a.pinned){a.x+=dx*diff;a.y+=dy*diff;}
-      if(!b.pinned){b.x-=dx*diff;b.y-=dy*diff;}
-    }
-    rope.points[0].x=ax;rope.points[0].y=ay;
-    rope.points[N].x=bx;rope.points[N].y=by;
-  }
-}
-function drawRope(){
-  if(!rope.active||rope.points.length<2)return;
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(rope.points[0].x,rope.points[0].y);
-  for(let i=1;i<rope.points.length;i++){
-    const p=rope.points[i];
-    ctx.lineTo(p.x,p.y);
-  }
-  ctx.strokeStyle="rgba(220,180,100,0.85)";
-  ctx.lineWidth=2.5;ctx.lineCap="round";ctx.lineJoin="round";
-  ctx.shadowColor="rgba(255,200,80,0.5)";ctx.shadowBlur=6;
-  ctx.stroke();ctx.shadowBlur=0;ctx.restore();
-}
-
-// ---- VẼ PHONG BÌ PHẲNG TRÊN CANVAS ----
-function drawEnvFlat(x, y, w, h, tilt, alpha){
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(tilt * Math.PI / 180);
-  ctx.globalAlpha = alpha;
-
-  // bóng đổ
-  ctx.save();ctx.globalAlpha=alpha*0.22;ctx.beginPath();ctx.ellipse(0,h*0.56,w*0.42,w*0.05,0,0,Math.PI*2);ctx.fillStyle="#000";ctx.fill();ctx.restore();
-
-  const hw=w/2, hh=h/2;
-  // thân phong bì
-  ctx.beginPath();
-  if(ctx.roundRect)ctx.roundRect(-hw,-hh,w,h,8);else ctx.rect(-hw,-hh,w,h);
-  const bodyG=ctx.createLinearGradient(0,-hh,0,hh);
-  bodyG.addColorStop(0,"rgba(178,30,82,0.97)");
-  bodyG.addColorStop(1,"rgba(110,12,52,0.97)");
-  ctx.fillStyle=bodyG;ctx.fill();
-  ctx.strokeStyle="rgba(60,3,25,0.9)";ctx.lineWidth=2;ctx.stroke();
-
-  // tam giác dưới
-  ctx.beginPath();ctx.moveTo(-hw+2,hh-2);ctx.lineTo(0,hh*0.1);ctx.lineTo(hw-2,hh-2);ctx.closePath();
-  ctx.fillStyle="rgba(80,6,36,0.97)";ctx.fill();
-  // tam giác trái
-  ctx.beginPath();ctx.moveTo(-hw+2,-hh+2);ctx.lineTo(-hw+2,hh-2);ctx.lineTo(0,hh*0.1);ctx.closePath();
-  ctx.fillStyle="rgba(100,10,48,0.92)";ctx.fill();
-  // tam giác phải
-  ctx.beginPath();ctx.moveTo(hw-2,-hh+2);ctx.lineTo(hw-2,hh-2);ctx.lineTo(0,hh*0.1);ctx.closePath();
-  ctx.fillStyle="rgba(100,10,48,0.92)";ctx.fill();
-
-  // nắp
-  const flapG=ctx.createLinearGradient(0,-hh,0,0);
-  flapG.addColorStop(0,"rgba(220,60,115,0.99)");
-  flapG.addColorStop(1,"rgba(160,28,78,0.97)");
-  ctx.beginPath();ctx.moveTo(-hw+2,-hh+2);ctx.lineTo(0,hh*0.58);ctx.lineTo(hw-2,-hh+2);ctx.closePath();
-  ctx.fillStyle=flapG;ctx.fill();
-
-  // highlight
-  ctx.beginPath();ctx.moveTo(-hw+4,-hh+2);ctx.lineTo(hw-4,-hh+2);
-  ctx.strokeStyle="rgba(255,150,195,0.3)";ctx.lineWidth=1.5;ctx.stroke();
-
-  ctx.restore();
-}
-
-// ---- HELPERS ----
-function easeOut(x){return 1-Math.pow(1-Math.max(0,Math.min(x,1)),3);}
-function easeInOut(x){return x<0.5?2*x*x:1-Math.pow(-2*x+2,2)/2;}
-function lerp(a,b,t){return a+(b-a)*t;}
-
-// Easing không đều cho từng cây: bật nhanh / đều / giật 2 nhịp
-function irregularEase(x, type){
-  x=Math.max(0,Math.min(x,1));
-  if(type===0){
-    // bật nhanh rồi khựng nhẹ rồi tiếp tục
-    if(x<0.55) return easeOut(x/0.55)*0.75;
-    const pause=Math.sin((x-0.55)/0.45*Math.PI*0.5)*0.04; // rung nhỏ lúc khựng
-    return 0.75+easeOut((x-0.55)/0.45)*0.25+pause*(1-(x-0.55)/0.45);
-  } else if(type===1){
-    // mọc đều nhưng lắc lư nhẹ cuối
-    const base=easeInOut(x);
-    return base+Math.sin(x*Math.PI)*0.04*(1-x);
-  } else {
-    // giật 2 nhịp: mọc nhanh 60%, dừng, rồi tiếp
-    if(x<0.45) return easeOut(x/0.45)*0.6;
-    if(x<0.58) return 0.6+Math.sin((x-0.45)/0.13*Math.PI)*0.03; // rung nhỏ khi dừng
-    return 0.6+easeOut((x-0.58)/0.42)*0.4;
-  }
-}
-
-function drawGrass(x,base,h,lean,lw,col,prog,ripple=0){
-  const ph=h*prog,pl=lean*prog+ripple;
-  const gap=lw*1.1,ddx=pl,ddy=-ph,len=Math.sqrt(ddx*ddx+ddy*ddy)||1;
-  const nx=(-ddy/len)*gap*0.5,ny=(ddx/len)*gap*0.5;
-  for(let s=-1;s<=1;s+=2){const ox=nx*s,oy=ny*s;ctx.beginPath();ctx.moveTo(x+ox,base+oy);ctx.bezierCurveTo(x+pl*0.15+ox*0.7,base-ph*0.3+oy*0.7,x+pl*0.85+ox*0.2,base-ph*0.65+oy*0.2,x+pl,base-ph);ctx.strokeStyle=col;ctx.lineWidth=lw*0.55;ctx.lineCap="round";ctx.stroke();}
-  ctx.beginPath();ctx.moveTo(x,base);ctx.bezierCurveTo(x+pl*0.15,base-ph*0.3,x+pl*0.85,base-ph*0.65,x+pl,base-ph);
-  const m=col.match(/[\d.]+/g);ctx.strokeStyle=`rgba(${m[0]},${m[1]},${m[2]},${parseFloat(m[3])*0.3})`;ctx.lineWidth=lw*0.3;ctx.stroke();
-}
-function leafFn(x,y,len,angle,col){ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.beginPath();ctx.ellipse(0,-len/2,len*0.38,len/2,0,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();ctx.restore();}
-function _petalShape(halfW,height,alpha,c0,c1,c2,sz){
-  ctx.beginPath();ctx.moveTo(0,0);ctx.bezierCurveTo(-halfW*0.6,-height*0.25,-halfW,-height*0.55,-halfW*0.65,-height*0.82);ctx.bezierCurveTo(-halfW*0.3,-height*0.95,halfW*0.3,-height*0.95,halfW*0.65,-height*0.82);ctx.bezierCurveTo(halfW,-height*0.55,halfW*0.6,-height*0.25,0,0);
-  const g=ctx.createRadialGradient(0,-height*0.45,sz*0.05,0,-height*0.45,halfW*1.4);g.addColorStop(0,c0);g.addColorStop(0.45,c1);g.addColorStop(1,c2);ctx.fillStyle=g;ctx.fill();
-}
-function flower(x,y,sz,alpha,headRot){
-  ctx.save();ctx.translate(x,y);ctx.rotate(headRot||0);ctx.shadowColor=`rgba(50,90,220,${alpha*0.7})`;ctx.shadowBlur=18;
-  const L=[[30,55,180],[65,100,225],[110,150,255],[175,205,255]];
-  const petal=(hw,ht,c1,c2,c3)=>_petalShape(hw,ht,alpha,`rgba(${c1[0]},${c1[1]},${c1[2]},${alpha})`,`rgba(${c2[0]},${c2[1]},${c2[2]},${alpha})`,`rgba(${c3[0]},${c3[1]},${c3[2]},${alpha*0.85})`,sz);
-  for(let i=0;i<3;i++){ctx.save();ctx.rotate(((Math.PI*2)/3)*i-Math.PI/2);petal(sz*0.58,sz*1.45,L[1],L[2],L[3]);ctx.restore();}
-  for(let i=0;i<3;i++){ctx.save();ctx.rotate(((Math.PI*2)/3)*i-Math.PI/2+Math.PI/3);petal(sz*0.44,sz*1.62,L[2],L[3],[255,255,255]);ctx.save();ctx.scale(0.72,0.82);petal(sz*0.44,sz*1.62,L[1],L[2],L[3]);ctx.restore();ctx.save();ctx.scale(0.42,0.55);petal(sz*0.44,sz*1.62,L[0],L[1],L[2]);ctx.restore();ctx.restore();}
-  const bg=ctx.createRadialGradient(0,0,0,0,0,sz*0.38);bg.addColorStop(0,`rgba(${L[0][0]},${L[0][1]},${L[0][2]},${alpha*0.7})`);bg.addColorStop(1,"transparent");
-  ctx.beginPath();ctx.ellipse(0,0,sz*0.38,sz*0.16,0,0,Math.PI*2);ctx.fillStyle=bg;ctx.fill();ctx.shadowBlur=0;ctx.restore();
-}
-function glow(x,y,r,col){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,col);g.addColorStop(1,"transparent");ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);}
-
-// ---- SPROUT: mầm cây nhú lên trước khi thành thân ----
-function drawSprout(bx,by,h,lean,lw,prog){
-  // prog 0→1: mầm nhú lên, cong nhẹ như hạt đang nảy mầm
-  const sp=Math.min(prog,1);
-  const sprH=h*0.18*sp;  // chiều cao mầm tối đa ~18% thân
-  const curl=lean*0.08;
-  // thân mầm cong chữ J nhỏ
-  ctx.beginPath();
-  ctx.moveTo(bx,by);
-  ctx.quadraticCurveTo(bx+curl*sp, by-sprH*0.5, bx+curl*sp*1.4, by-sprH);
-  ctx.strokeStyle=`rgba(60,140,40,${0.85*sp})`;
-  ctx.lineWidth=lw*0.7;ctx.lineCap="round";ctx.stroke();
-  // đầu mầm: hạt tròn nhỏ
-  const bud=lw*1.6*sp;
-  ctx.beginPath();ctx.arc(bx+curl*sp*1.4, by-sprH, bud, 0, Math.PI*2);
-  const g=ctx.createRadialGradient(bx+curl*sp*1.4,by-sprH,0,bx+curl*sp*1.4,by-sprH,bud*2);
-  g.addColorStop(0,`rgba(120,200,60,${sp})`);
-  g.addColorStop(1,`rgba(40,110,20,${sp*0.6})`);
-  ctx.fillStyle=g; ctx.fill();
-}
-
-function buildStem(bx,by,h,lean,lw,leaves,flSz,sw,prog,curve,stemWindOff,headRot){
-  // prog toàn bộ: 0→0.12 = mầm, 0.12→0.75 = thân+lá mọc, 0.75→1.0 = hoa nở
-  const c=curve!==undefined?curve:0.35;
-  const curl=lean*0.18,hr=Math.min(Math.abs(lean)/80,1)*20;
-  const totalLean=lean+(stemWindOff||0);
-  const cpx=bx+totalLean*c*1.14+sw*0.3, cpy=by-h*0.5;
-  const ex=bx+totalLean+sw+curl, ey=by-h+Math.abs(curl)*0.4+hr;
-  const cp2x=bx+totalLean*(c*1.14+0.46)+curl*0.7, cp2y=by-h*0.82;
-  const bp=(tt)=>({
-    x:(1-tt)**3*bx+3*(1-tt)**2*tt*cpx+3*(1-tt)*tt**2*cp2x+tt**3*ex,
-    y:(1-tt)**3*by+3*(1-tt)**2*tt*cpy+3*(1-tt)*tt**2*cp2y+tt**3*ey
-  });
-
-  // --- giai đoạn 1: MẦM (prog 0→0.15) ---
-  if(prog<0.15){
-    const sprProg=prog/0.15;
-    drawSprout(bx,by,h,lean,lw,sprProg);
-    return;
-  }
-
-  // --- giai đoạn 2: THÂN + LÁ (prog 0.15→0.8) ---
-  const stemProg=prog<0.8 ? (prog-0.15)/0.65 : 1.0;
-
-  ctx.beginPath();ctx.moveTo(bx,by);
-  for(let i=1;i<=30;i++){
-    const tt=(i/30)*stemProg;
-    ctx.lineTo(
-      (1-tt)**3*bx+3*(1-tt)**2*tt*cpx+3*(1-tt)*tt**2*cp2x+tt**3*ex,
-      (1-tt)**3*by+3*(1-tt)**2*tt*cpy+3*(1-tt)*tt**2*cp2y+tt**3*ey
-    );
-  }
-  ctx.strokeStyle="rgba(40,120,30,0.92)";ctx.lineWidth=lw;ctx.lineCap="round";ctx.stroke();
-  leaves.forEach(lf=>{
-    if(stemProg<lf.t+0.05)return;
-    const lp=Math.min((stemProg-lf.t)/0.18,1),p=bp(lf.t);
-    leafFn(p.x,p.y,lf.len*lp,lf.ang+sw*0.03*lf.side,lf.dark?"rgba(10,55,12,0.90)":"rgba(20,85,22,0.92)");
-  });
-
-  // nụ xuất hiện khi thân gần đầy (stemProg > 0.82)
-  if(stemProg>0.82){
-    const budProg=Math.min((stemProg-0.82)/0.18,1);
-    const tip=bp(1);
-    const budSz=flSz*0.22*easeOut(budProg);
-    // nụ hoa: hình oval nhỏ xanh→vàng
-    ctx.save();ctx.translate(tip.x,tip.y);
-    ctx.beginPath();ctx.ellipse(0,-budSz*0.9,budSz*0.45,budSz,0,0,Math.PI*2);
-    const bg2=ctx.createRadialGradient(0,-budSz,0,0,-budSz,budSz*1.2);
-    bg2.addColorStop(0,`rgba(180,220,60,${budProg})`);
-    bg2.addColorStop(0.6,`rgba(80,160,30,${budProg*0.9})`);
-    bg2.addColorStop(1,`rgba(40,100,20,${budProg*0.5})`);
-    ctx.fillStyle=bg2;ctx.fill();
-    // đài hoa
-    for(let s=-1;s<=1;s+=2){
-      ctx.beginPath();ctx.moveTo(0,0);
-      ctx.quadraticCurveTo(s*budSz*0.7,-budSz*0.5,s*budSz*0.4,-budSz*1.5);
-      ctx.strokeStyle=`rgba(50,130,25,${budProg*0.8})`;ctx.lineWidth=lw*0.5;ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  // --- giai đoạn 3: HOA NỞ (prog 0.8→1.0) ---
-  if(prog>0.8){
-    const fp=easeOut((prog-0.8)/0.2);
-    // hoa nở "bung" ra từ nụ: scale từ 0 lên full
-    const tip=bp(1);
-    // hiệu ứng pop nhẹ: scale vượt 1 một chút rồi về
-    const popScale=fp<0.7 ? fp/0.7 : 1.0+Math.sin((fp-0.7)/0.3*Math.PI)*0.12*(1-fp);
-    ctx.save();ctx.translate(tip.x,tip.y);ctx.scale(popScale,popScale);ctx.translate(-tip.x,-tip.y);
-    flower(tip.x,tip.y,flSz,0.93*fp,headRot||0);
-    ctx.restore();
-    // glow nhỏ lúc nở
-    if(fp<0.5){
-      const glowA=(0.5-fp)/0.5*0.4;
-      glow(tip.x,tip.y,flSz*2,`rgba(150,180,255,${glowA})`);
-    }
-  }
-}
-
-// ---- DOG DRAW ----
-function drawDog(x,y,size,legPhase,alpha,isCarrying,facingLeft,tailWag){
-  ctx.save();ctx.translate(x,y);if(facingLeft)ctx.scale(-1,1);ctx.globalAlpha=alpha;
-  const s=size;
-  ctx.save();ctx.globalAlpha=alpha*0.15;ctx.beginPath();ctx.ellipse(0,s*0.05,s*0.7,s*0.1,0,0,Math.PI*2);ctx.fillStyle="#000";ctx.fill();ctx.restore();
-  const tailAngle=-0.5+Math.sin(tailWag*7)*0.8;
-  ctx.save();ctx.translate(-s*0.55,-s*0.25);ctx.rotate(tailAngle);
-  ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(s*0.2,-s*0.3,s*0.1,-s*0.52);
-  ctx.strokeStyle="rgba(190,120,40,0.95)";ctx.lineWidth=s*0.14;ctx.lineCap="round";ctx.stroke();
-  ctx.beginPath();ctx.arc(s*0.1,-s*0.52,s*0.1,0,Math.PI*2);ctx.fillStyle="rgba(240,200,130,0.9)";ctx.fill();ctx.restore();
-  ctx.beginPath();ctx.ellipse(0,-s*0.26,s*0.52,s*0.28,0.1,0,Math.PI*2);
-  const bg=ctx.createRadialGradient(-s*0.1,-s*0.38,0,0,-s*0.26,s*0.6);
-  bg.addColorStop(0,"rgba(245,185,75,0.98)");bg.addColorStop(0.5,"rgba(210,138,45,0.97)");bg.addColorStop(1,"rgba(158,85,15,0.9)");
-  ctx.fillStyle=bg;ctx.fill();
-  ctx.beginPath();ctx.ellipse(s*0.08,-s*0.16,s*0.22,s*0.13,0.1,0,Math.PI*2);ctx.fillStyle="rgba(255,230,180,0.65)";ctx.fill();
-  const ls=Math.sin(legPhase)*0.4;
-  [[s*0.28,-s*0.05,1],[s*0.28,-s*0.05,-1],[-s*0.28,-s*0.05,-1],[-s*0.28,-s*0.05,1]].forEach(([bx,by,side],idx)=>{
-    const swing=(idx<2?ls:-ls)*side;
-    ctx.save();ctx.translate(bx,by);ctx.rotate(swing);
-    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(s*0.05,s*0.2);ctx.strokeStyle="rgba(195,125,35,0.95)";ctx.lineWidth=s*0.12;ctx.lineCap="round";ctx.stroke();
-    ctx.beginPath();ctx.moveTo(s*0.05,s*0.2);ctx.lineTo(s*0.04,s*0.4);ctx.strokeStyle="rgba(172,105,20,0.92)";ctx.lineWidth=s*0.1;ctx.stroke();
-    ctx.beginPath();ctx.ellipse(s*0.04,s*0.42,s*0.08,s*0.05,0,0,Math.PI*2);ctx.fillStyle="rgba(150,85,15,0.9)";ctx.fill();ctx.restore();
-  });
-  ctx.beginPath();ctx.ellipse(s*0.3,-s*0.4,s*0.17,s*0.19,-0.3,0,Math.PI*2);
-  const ng=ctx.createRadialGradient(s*0.26,-s*0.46,0,s*0.3,-s*0.4,s*0.22);
-  ng.addColorStop(0,"rgba(248,190,82,0.98)");ng.addColorStop(1,"rgba(185,115,25,0.9)");ctx.fillStyle=ng;ctx.fill();
-  ctx.beginPath();ctx.ellipse(s*0.5,-s*0.6,s*0.31,s*0.27,0.15,0,Math.PI*2);
-  const hg=ctx.createRadialGradient(s*0.42,-s*0.68,0,s*0.5,-s*0.6,s*0.38);
-  hg.addColorStop(0,"rgba(252,198,88,1)");hg.addColorStop(0.6,"rgba(218,152,42,0.98)");hg.addColorStop(1,"rgba(168,98,12,0.9)");
-  ctx.fillStyle=hg;ctx.fill();ctx.strokeStyle="rgba(128,68,8,0.25)";ctx.lineWidth=s*0.012;ctx.stroke();
-  ctx.beginPath();ctx.ellipse(s*0.73,-s*0.54,s*0.17,s*0.13,0.1,0,Math.PI*2);ctx.fillStyle="rgba(255,218,158,0.95)";ctx.fill();
-  ctx.beginPath();ctx.ellipse(s*0.83,-s*0.58,s*0.07,s*0.05,0.1,0,Math.PI*2);ctx.fillStyle="rgba(55,18,8,0.92)";ctx.fill();
-  ctx.beginPath();ctx.arc(s*0.81,-s*0.61,s*0.02,0,Math.PI*2);ctx.fillStyle="rgba(255,255,255,0.65)";ctx.fill();
-  if(!isCarrying){
-    ctx.beginPath();ctx.arc(s*0.77,-s*0.5,s*0.06,0.2,Math.PI-0.2);ctx.strokeStyle="rgba(138,58,28,0.8)";ctx.lineWidth=s*0.025;ctx.stroke();
-    ctx.beginPath();ctx.ellipse(s*0.77,-s*0.45,s*0.05,s*0.07,0,0,Math.PI*2);ctx.fillStyle="rgba(240,75,75,0.85)";ctx.fill();
-  }else{
-    ctx.beginPath();ctx.moveTo(s*0.66,-s*0.5);ctx.lineTo(s*0.87,-s*0.5);ctx.strokeStyle="rgba(138,58,28,0.7)";ctx.lineWidth=s*0.02;ctx.stroke();
-  }
-  ctx.beginPath();ctx.arc(s*0.58,-s*0.68,s*0.07,0,Math.PI*2);ctx.fillStyle="rgba(28,12,3,0.95)";ctx.fill();
-  ctx.beginPath();ctx.arc(s*0.55,-s*0.71,s*0.025,0,Math.PI*2);ctx.fillStyle="rgba(255,255,255,0.82)";ctx.fill();
-  ctx.save();ctx.translate(s*0.33,-s*0.8);ctx.rotate(-0.35+Math.sin(tailWag*4)*0.1);
-  ctx.beginPath();ctx.ellipse(0,s*0.15,s*0.1,s*0.23,-0.2,0,Math.PI*2);ctx.fillStyle="rgba(175,95,18,0.95)";ctx.fill();ctx.restore();
-  ctx.save();ctx.translate(s*0.57,-s*0.83);ctx.rotate(0.28+Math.sin(tailWag*4+0.5)*0.07);
-  ctx.beginPath();ctx.ellipse(0,s*0.12,s*0.09,s*0.2,0.2,0,Math.PI*2);ctx.fillStyle="rgba(175,95,18,0.95)";ctx.fill();ctx.restore();
-  ctx.beginPath();ctx.arc(s*0.38,-s*0.48,s*0.16,-2.1,0.9);ctx.strokeStyle="rgba(220,55,75,0.95)";ctx.lineWidth=s*0.065;ctx.lineCap="round";ctx.stroke();
-  ctx.beginPath();ctx.arc(s*0.5,-s*0.34,s*0.05,0,Math.PI*2);ctx.fillStyle="rgba(255,195,45,0.9)";ctx.fill();
-  ctx.globalAlpha=1;ctx.restore();
-}
-
-function drawPawPrint(p){
-  ctx.save();ctx.globalAlpha=p.life*0.45;
-  const s=dog.size*0.12;ctx.fillStyle="rgba(175,115,38,0.7)";
-  ctx.beginPath();ctx.ellipse(p.x,p.y,s*0.6,s*0.42,0,0,Math.PI*2);ctx.fill();
-  [[-0.4,-0.62],[0,-0.78],[0.4,-0.62],[-0.65,-0.22],[0.65,-0.22]].forEach(([dx,dy])=>{ctx.beginPath();ctx.arc(p.x+dx*s,p.y+dy*s,s*0.22,0,Math.PI*2);ctx.fill();});
-  ctx.restore();
-}
-
-// ---- INTERACTION ----
-let envelopeClicked=false;
-function clickEnvelope(){
-  const scene=document.getElementById("env-scene");
-  const hint=document.getElementById("env-hint");
-  if(!envelopeClicked){
-    envelopeClicked=true;hint.classList.remove("visible");
-    scene.classList.add("opened");
-    // 🌱 Kích hoạt cỏ và hoa mọc lần đầu mở phong bì
-    if(growStart===null) growStart=t;
-    setTimeout(()=>{hint.textContent="Nhấn để đóng";hint.classList.add("visible");},2400);
-  }else{
-    envelopeClicked=false;scene.classList.remove("opened");hint.classList.remove("visible");
-    setTimeout(()=>{hint.textContent="Nhấn vào để mở thư";hint.classList.add("visible");},800);
-  }
-}
-
-function isNearDog(mx,my){
-  if(!dog.landed||dogFly.active)return false;
-  const dx=mx-dog.x,dy=my-dog.y;
-  return Math.sqrt(dx*dx+dy*dy)<dog.size*3.5;
-}
-function isNearFlowerBush(mx,my){
-  for(const s of stems){const fx=CX+s.ox+s.lean,fy=groundY-s.h;const dx=mx-fx,dy=my-fy;if(Math.sqrt(dx*dx+dy*dy)<s.flSz*2.2)return{fx,fy,s};}
-  return null;
-}
-// tìm lưỡi cỏ gần nhất (fg hoặc mid blades)
-function isNearGrass(mx,my){
-  const allBlades=[...fgBlades,...midBlades];
-  let best=null,bestD=9999;
-  for(const b of allBlades){
-    const bx=CX+b.x, by=groundY;
-    const tipX=bx+b.lean, tipY=by-b.h;
-    const dx=mx-tipX, dy=my-tipY;
-    const d=Math.sqrt(dx*dx+dy*dy);
-    if(d<b.h*0.35&&d<bestD){bestD=d;best={b,bx,by};}
-  }
-  return best;
-}
-
-// ---- SEQUENCE CONTROLLER ----
-// Phases: "card" -> "dog-enter"(trái→phải) -> "dog-turn"(quay đầu+móc dây) -> "dog-pull"(lùi trái) -> "env-place" -> "dog-return" -> "full"
-let seqPhase="card";
-let dogEnterT=0;   // chó chạy từ trái sang phải
-let dogTurnT=0;    // chó quay đầu, móc dây vào phong bì
-let dogPullT=0;    // chó đi lùi sang trái kéo phong bì
-let envPlaceT=0;
-let dogReturnT=0;
-let dogIdlePhase=0;
-let hoverFireflyTimer=0;
-
-function openCard(){
-  document.getElementById("card").classList.add("hide");
-  phase="scene";
-  seqPhase="dog-enter";
-  dogEnterT=0;
-  // chó bắt đầu bên trái màn hình, mặt nhìn phải
-  dog.x=-dog.size;dog.y=groundY;dog.landed=false;dog.notified=false;
-  dog.facingLeft=false;
-  growStart=null; // cỏ và hoa chỉ mọc sau khi mở phong bì
-}
-
-function positionEnvelopeEl(x,y){
-  const wrapper=document.getElementById("env-wrapper");
-  wrapper.style.transition="none";
-  wrapper.style.left=x+"px";
-  wrapper.style.top=y+"px";
-  wrapper.style.transform="translateX(-50%)";
-}
-function computeEnvFinalPos(){return{x:W/2,y:H*0.28};}
-
-const cursorTrail=[];
-
-function draw(){
-  ctx.clearRect(0,0,W,H);
-  ctx.fillStyle="#000";ctx.fillRect(0,0,W,H);
-
-  if(phase==="card"){t+=0.016;requestAnimationFrame(draw);return;}
-
-  let gp=0;
-  if(growStart!==null){
-    const ge=t-growStart;
-    gp=Math.min(ge/GROW_DUR,1);
-  }
-
-  const _windBase=Math.sin(t*0.38)*0.6+Math.sin(t*0.17)*0.4;
-  const sw=Math.sin(t*0.55)*5+Math.sin(t*0.83)*3+_windBase*14;
-
-  // tính sớm để dùng trong hover
-  const ge2=growStart!==null ? t-growStart : -9999;
-  const STEM_DUR=10.0;
-  const stemGlobalProg=growStart!==null ? easeInOut(Math.min(Math.max(ge2,0)/STEM_DUR,1)) : 0;
-
-  let curHoverType=null,hintText=null;
-  if(seqPhase==="full"){
-    if(isNearDog(mousePos.x,mousePos.y)){
-      curHoverType="dog";hintText="🐶 Xoa đầu chó nào!";
-      if(prevHoverType!=="dog"&&!dogFly.active&&!dogHoverTriggered){
-        dogHoverTriggered=true;dogFly.active=true;dogFly.phase="away";dogFly.awayT=0;dogFly.returnT=0;
-        dogFly.startX=dog.x;dogFly.startY=dog.y;
-        dogFly.awayX=CX+(Math.random()>0.5?1:-1)*W*0.25;dogFly.awayY=groundY;
+      // ---- UNIFIED POINTER POSITION UPDATE ----
+      function updatePointerPos(clientX, clientY) {
+        mousePos.x = clientX;
+        mousePos.y = clientY;
+        cursorEl.style.left = clientX + "px";
+        cursorEl.style.top = clientY + "px";
+        hintEl.style.left = clientX + "px";
+        hintEl.style.top = clientY + "px";
       }
-    } else {
-      if(prevHoverType==="dog")dogHoverTriggered=false;
 
-      // hover vào hoa → bướm bay ra
-      const fh=isNearFlowerBush(mousePos.x,mousePos.y);
-      if(fh && stemGlobalProg>0.8){
-        curHoverType="flower";hintText="🦋 Bướm bay ra!";
-        if(prevHoverType!=="flower"){bushShake.active=true;bushShake.t=0;bushShake.intensity=0.45;}
-        flowerHoverTimer++;
-        if(flowerHoverTimer%18===0){
-          spawnButterfly(fh.fx, fh.fy);
+      // Mouse events
+      window.addEventListener("mousemove", (e) => {
+        updatePointerPos(e.clientX, e.clientY);
+      });
+
+      // Touch events — map touch to mouse-equivalent
+      window.addEventListener("touchstart", (e) => {
+        const touch = e.touches[0];
+        updatePointerPos(touch.clientX, touch.clientY);
+        // Trigger interaction same as hover
+        handlePointerInteraction(touch.clientX, touch.clientY, true);
+      }, { passive: true });
+
+      window.addEventListener("touchmove", (e) => {
+        const touch = e.touches[0];
+        updatePointerPos(touch.clientX, touch.clientY);
+        // Continuous interaction while dragging
+        handlePointerInteraction(touch.clientX, touch.clientY, false);
+      }, { passive: true });
+
+      window.addEventListener("touchend", (e) => {
+        // Keep last position, clear hover state after delay
+        setTimeout(() => {
+          setCursorHover(null, null);
+        }, 800);
+      }, { passive: true });
+
+      // Show touch hint on mobile after scene starts
+      function showTouchHint() {
+        if (isTouchDevice) {
+          const hint = document.getElementById('touch-hint');
+          hint.classList.add('show');
+          setTimeout(() => hint.classList.remove('show'), 4000);
         }
-      } else {
-        flowerHoverTimer=0;
-        // hover vào cỏ → mọc hoa mini
-        const gh=isNearGrass(mousePos.x,mousePos.y);
-        if(gh){
-          curHoverType="grass";hintText="🌸 Hoa nở!";
+      }
+
+      function setCursorHover(type, txt) {
+        cursorEl.className = type ? `hover-${type}` : "";
+        if (txt) {
+          hintEl.textContent = txt;
+          hintEl.classList.add("show");
+        } else hintEl.classList.remove("show");
+      }
+
+      // ---- ENVELOPE SLIDE STATE ----
+      const envSlide = {
+        active: false,
+        x: 0,
+        y: 0,
+        startX: 0,
+        finalX: 0,
+        finalY: 0,
+        tilt: 0,
+        w: 0,
+        h: 0,
+      };
+      function getEnvSize() {
+        const vw = window.innerWidth;
+        const w = Math.min(Math.max(249, (vw * 42) / 100), 349);
+        return { w, h: w * 0.5333 };
+      }
+
+      // ---- ENVIRONMENT ----
+      function makeRng(s) {
+        let v = s;
+        return () => {
+          v = (v * 16807) % 2147483647;
+          return (v - 1) / 2147483646;
+        };
+      }
+      function genBlades(n, seed, hMin, hMax, lMax, aMin, aMax, sx) {
+        const rng = makeRng(seed), b = [];
+        for (let i = 0; i < n; i++) {
+          const growDur = 0.3 + rng() * 2.2;
+          const easingType = Math.floor(rng() * 3);
+          const rawDelay = rng();
+          const delay =
+            rawDelay < 0.3
+              ? rawDelay * 1.5
+              : rawDelay < 0.7
+                ? 1.0 + rawDelay * 4
+                : 3.5 + rawDelay * 5;
+          b.push({
+            x: (rng() - 0.5) * sx,
+            h: hMin + rng() * (hMax - hMin),
+            lean: (rng() - 0.5) * lMax * 2,
+            lw: 0.7 + rng() * 1.0,
+            alpha: aMin + rng() * (aMax - aMin),
+            phase: rng() * Math.PI * 2,
+            delay,
+            growDur,
+            easingType,
+          });
+        }
+        return b;
+      }
+      const bMin = isMobile ? 285 : 65, bMax = isMobile ? 355 : 135;
+      const mMin = isMobile ? 275 : 55, mMax = isMobile ? 320 : 100;
+      const fMin = isMobile ? 250 : 30, fMax = isMobile ? 285 : 65;
+      const bgBlades = genBlades(120, 42, bMin * MS, bMax * MS, 40, 0.3, 0.55, W * 1.1);
+      const midBlades = genBlades(140, 77, mMin * MS, mMax * MS, 38, 0.4, 0.65, W * 1.05);
+      const fgBlades = genBlades(160, 13, fMin * MS, fMax * MS, 36, 0.5, 0.82, W * 1.1);
+
+      const SC = isMobile ? 12 : 20, SHB = isMobile ? 260 : 250, SHR = isMobile ? 130 : 250, SSP = isMobile ? 54 : 100;
+      const SLF = isMobile ? 1.8 : 0.8, SLR = isMobile ? 50 : 5, SCURVE = isMobile ? 0.35 : -0.6;
+      const FLB = isMobile ? 17 : 12, FLR = isMobile ? 10 : 12;
+      function genStems(seed) {
+        const rng = makeRng(seed), arr = [];
+        for (let i = 0; i < SC; i++) {
+          const ox = (rng() - 0.5) * SSP * MS;
+          const h = (SHB + rng() * SHR) * MS;
+          const lean = ox * SLF + (rng() - 0.5) * SLR * MS;
+          const lw = (1.5 + rng() * 1.5) * MS;
+          const flSz = (FLB + rng() * FLR) * MS;
+          const lc = (isMobile ? 2 : 0) + Math.floor(rng() * ((isMobile ? 4 : 5) - (isMobile ? 2 : 0) + 1));
+          const leaves = [];
+          for (let j = 0; j < lc; j++) {
+            const side = j % 2 === 0 ? -1 : 1;
+            leaves.push({
+              t: 0.25 + j * (0.55 / lc),
+              side,
+              len: (20 + rng() * 18) * MS,
+              ang: (0.45 + rng() * 0.25) * side,
+              dark: j === lc - 1,
+            });
+          }
+          const rawDelay = rng();
+          const delay =
+            rawDelay < 0.25
+              ? rawDelay * 0.8
+              : rawDelay < 0.6
+                ? 0.8 + rawDelay * 3.5
+                : 3.0 + rawDelay * 6;
+          const growDur = 0.5 + rng() * 2.5;
+          const easingType = Math.floor(rng() * 3);
+          arr.push({
+            ox, h, lean, lw, flSz, leaves,
+            swayFactor: 0.5 + rng() * 0.8,
+            swayFreq: 0.45 + rng() * 0.35,
+            swayPhase: rng() * Math.PI * 2,
+            delay, growDur, easingType,
+            curve: SCURVE,
+          });
+        }
+        arr.sort((a, b) => a.lean - b.lean);
+        return arr;
+      }
+      const stems = genStems(99);
+      const tallest = stems.reduce((a, b) => (a.h > b.h ? a : b));
+      const dogTarget = { x: CX + tallest.ox + tallest.lean, y: groundY };
+
+      const sparks = Array.from({ length: 50 }, () => ({
+        x: CX + (Math.random() - 0.5) * 300 * MS,
+        y: groundY - 80 * MS - Math.random() * 280 * MS,
+        r: Math.random() * 1.6 + 0.3,
+        phase: Math.random() * Math.PI * 2,
+        spd: Math.random() * 0.018 + 0.006,
+      }));
+      const fireflies = Array.from({ length: 28 }, () => ({
+        x: CX + (Math.random() - 0.5) * W * 0.85,
+        y: groundY,
+        targetY: groundY - 30 - Math.random() * (H * 0.65),
+        vx: (Math.random() - 0.5) * 0.12,
+        vy: -(Math.random() * 0.18 + 0.08),
+        r: Math.random() * 2.2 + 1.2,
+        phase: Math.random() * Math.PI * 2,
+        blinkSpd: Math.random() * 0.04 + 0.02,
+        hue: 50 + Math.random() * 30,
+        risen: false,
+      }));
+      const burstParticles = [], hoverFireflies = [], grassWaves = [];
+      const bushShake = { active: false, t: 0, intensity: 0 };
+      const grassFlowers = [];
+      let grassHoverTimer = 0;
+      let flowerHoverTimer = 0;
+
+      // ---- HOA MINI TRÊN CỎ ----
+      function drawMiniFlower(x, y, sz, prog, hue) {
+        if (prog <= 0) return;
+        ctx.save();
+        ctx.translate(x, y);
+        const fp = easeOut(Math.min(prog, 1));
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, -sz * 1.6 * fp);
+        ctx.strokeStyle = `rgba(40,130,30,${fp * 0.9})`;
+        ctx.lineWidth = sz * 0.18;
+        ctx.lineCap = "round";
+        ctx.stroke();
+        if (fp > 0.35) {
+          const bf = easeOut((fp - 0.35) / 0.65);
+          for (let i = 0; i < 5; i++) {
+            const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+            ctx.save();
+            ctx.translate(0, -sz * 1.6 * fp);
+            ctx.rotate(a);
+            ctx.beginPath();
+            ctx.ellipse(sz * 0.55 * bf, 0, sz * 0.55 * bf, sz * 0.3 * bf, 0, 0, Math.PI * 2);
+            ctx.fillStyle = `hsla(${hue},90%,78%,${fp * 0.9})`;
+            ctx.fill();
+            ctx.restore();
+          }
+          ctx.beginPath();
+          ctx.arc(0, -sz * 1.6 * fp, sz * 0.27 * bf, 0, Math.PI * 2);
+          ctx.fillStyle = `hsla(${hue + 35},100%,92%,${fp})`;
+          ctx.shadowColor = `hsla(${hue},80%,70%,0.6)`;
+          ctx.shadowBlur = 6 * bf;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+        ctx.restore();
+      }
+
+      // ---- BƯỚM ----
+      const butterflies = [];
+      const BUTTERFLY_COLORS = [
+        { wing1: [255, 180, 220], wing2: [255, 120, 170], body: [180, 60, 100] },
+        { wing1: [255, 220, 120], wing2: [255, 170, 60], body: [160, 90, 20] },
+        { wing1: [200, 160, 255], wing2: [140, 90, 230], body: [80, 30, 140] },
+        { wing1: [160, 230, 255], wing2: [80, 180, 230], body: [20, 90, 150] },
+        { wing1: [180, 255, 180], wing2: [90, 200, 100], body: [20, 100, 40] },
+      ];
+      let butterflySpawnTimer = 0;
+      let butterfliesEnabled = false;
+
+      function spawnButterfly(nearX, nearY) {
+        const col = BUTTERFLY_COLORS[Math.floor(Math.random() * BUTTERFLY_COLORS.length)];
+        const angle = Math.random() * Math.PI * 2;
+        const orbitR = 40 + Math.random() * 120;
+        butterflies.push({
+          cx: nearX + (Math.random() - 0.5) * 80,
+          cy: nearY - 20 - Math.random() * 60,
+          orbitR,
+          orbitRY: orbitR * 0.4,
+          angle,
+          speed: (0.4 + Math.random() * 0.7) * (Math.random() < 0.5 ? 1 : -1),
+          driftX: 0, driftY: 0,
+          driftPhaseX: Math.random() * Math.PI * 2,
+          driftPhaseY: Math.random() * Math.PI * 2,
+          driftSpd: 0.008 + Math.random() * 0.012,
+          flapPhase: Math.random() * Math.PI * 2,
+          flapSpd: 2.5 + Math.random() * 2.0,
+          sz: (6 + Math.random() * 7) * MS,
+          col, alpha: 0, life: 1.0,
+          born: t,
+          leavingAt: 8 + Math.random() * 20,
+          leaving: false,
+          leaveVX: (Math.random() - 0.5) * 0.8,
+          leaveVY: -(0.2 + Math.random() * 0.4),
+        });
+      }
+
+      function drawButterfly(bfly) {
+        const { cx, cy, angle, orbitR, orbitRY, flapPhase, sz, col, alpha } = bfly;
+        const bx = cx + Math.cos(angle) * orbitR;
+        const by = cy + Math.sin(angle) * orbitRY;
+        const flap = Math.abs(Math.sin(flapPhase));
+        const wingW = sz * (0.3 + flap * 0.8);
+        const wingH = sz * (0.55 + flap * 0.15);
+        const tilt = Math.sin(angle) * 0.25;
+        ctx.save();
+        ctx.translate(bx, by);
+        ctx.rotate(tilt);
+        ctx.globalAlpha = alpha;
+        const r1 = col.wing1, r2 = col.wing2, rb = col.body;
+        ctx.save(); ctx.scale(-1, 1); _drawWing(wingW, wingH, sz, r1, r2, alpha); ctx.restore();
+        _drawWing(wingW, wingH, sz, r1, r2, alpha);
+        ctx.save(); ctx.scale(-1, 1); _drawWing(wingW * 0.65, wingH * 0.75, sz * 0.7, r2, r1, alpha, sz * 0.15); ctx.restore();
+        _drawWing(wingW * 0.65, wingH * 0.75, sz * 0.7, r2, r1, alpha, sz * 0.15);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, sz * 0.08, sz * 0.38, 0, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${rb[0]},${rb[1]},${rb[2]},${alpha * 0.95})`;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(0, -sz * 0.35, sz * 0.1, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${rb[0]},${rb[1]},${rb[2]},${alpha})`;
+        ctx.fill();
+        for (let s = -1; s <= 1; s += 2) {
+          ctx.beginPath();
+          ctx.moveTo(s * sz * 0.06, -sz * 0.4);
+          ctx.quadraticCurveTo(s * sz * 0.25, -sz * 0.65, s * sz * 0.18, -sz * 0.78);
+          ctx.strokeStyle = `rgba(${rb[0]},${rb[1]},${rb[2]},${alpha * 0.8})`;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(s * sz * 0.18, -sz * 0.78, sz * 0.045, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${rb[0]},${rb[1]},${rb[2]},${alpha * 0.9})`;
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      function _drawWing(ww, wh, sz, c1, c2, alpha, yOff = 0) {
+        ctx.save();
+        ctx.translate(0, yOff);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.bezierCurveTo(ww * 0.3, -wh * 0.5, ww * 1.1, -wh * 0.8, ww * 1.0, -wh * 0.2);
+        ctx.bezierCurveTo(ww * 0.9, wh * 0.3, ww * 0.4, wh * 0.25, 0, 0);
+        const g = ctx.createRadialGradient(ww * 0.4, -wh * 0.3, 0, ww * 0.4, -wh * 0.3, ww * 1.2);
+        g.addColorStop(0, `rgba(${c1[0]},${c1[1]},${c1[2]},${alpha * 0.92})`);
+        g.addColorStop(0.5, `rgba(${c2[0]},${c2[1]},${c2[2]},${alpha * 0.75})`);
+        g.addColorStop(1, `rgba(${c2[0]},${c2[1]},${c2[2]},${alpha * 0.1})`);
+        ctx.fillStyle = g;
+        ctx.fill();
+        ctx.strokeStyle = `rgba(${c2[0]},${c2[1]},${c2[2]},${alpha * 0.3})`;
+        ctx.lineWidth = 0.6;
+        ctx.stroke();
+        ctx.restore();
+      }
+      let prevHoverType = null;
+
+      // ---- DOG ----
+      const DOG_SPEED = isMobile ? 1.2 : 1.0;
+      const DOG_RET = isMobile ? 1.5 : 1.2;
+      const dog = {
+        x: -W * 0.1, y: groundY, pathT: 0, landed: false, notified: false,
+        tailWag: 0, legPhase: 0, isCarrying: false, facingLeft: false,
+        _restX: CX + W * 0.18,
+        size: (Math.max(14, W * 0.035) + 8) * MS,
+        landedT: 0,
+      };
+      const dogFly = {
+        active: false, phase: "away", awayT: 0, returnT: 0,
+        startX: 0, startY: 0, awayX: 0, awayY: 0,
+        landT: 0, landStartX: 0,
+      };
+      let dogLandedOnFlower = false, dogHoverTriggered = false;
+      const pawPrints = [];
+      let lastPawX = -9999;
+
+      function spawnPawPrint(x, y) {
+        pawPrints.push({ x, y, life: 1.0, decay: 0.004 + Math.random() * 0.003 });
+      }
+
+      // ---- ROPE ----
+      const rope = { points: [], active: false };
+      function initRope(x1, y1, x2, y2, n = 18) {
+        rope.points = [];
+        for (let i = 0; i <= n; i++) {
+          const tt = i / n;
+          rope.points.push({ x: x1 + (x2 - x1) * tt, y: y1 + (y2 - y1) * tt, vx: 0, vy: 0, pinned: false });
+        }
+        rope.points[0].pinned = true;
+        rope.active = true;
+      }
+      function updateRope(ax, ay, bx, by) {
+        if (!rope.points.length) return;
+        const N = rope.points.length - 1;
+        rope.points[0].x = ax; rope.points[0].y = ay;
+        rope.points[N].x = bx; rope.points[N].y = by;
+        const SEG = Math.sqrt((bx - ax) ** 2 + (by - ay) ** 2) / N;
+        for (let i = 1; i < N; i++) {
+          const p = rope.points[i];
+          const px = p.x, py = p.y;
+          p.x += p.vx * 0.9; p.y += p.vy * 0.9 + 0.12;
+          p.vx = p.x - px; p.vy = p.y - py;
+        }
+        for (let iter = 0; iter < 8; iter++) {
+          for (let i = 0; i < N; i++) {
+            const a = rope.points[i], b = rope.points[i + 1];
+            const dx = b.x - a.x, dy = b.y - a.y;
+            const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
+            const diff = ((dist - SEG) / dist) * 0.5;
+            if (!a.pinned) { a.x += dx * diff; a.y += dy * diff; }
+            if (!b.pinned) { b.x -= dx * diff; b.y -= dy * diff; }
+          }
+          rope.points[0].x = ax; rope.points[0].y = ay;
+          rope.points[N].x = bx; rope.points[N].y = by;
+        }
+      }
+      function drawRope() {
+        if (!rope.active || rope.points.length < 2) return;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(rope.points[0].x, rope.points[0].y);
+        for (let i = 1; i < rope.points.length; i++) ctx.lineTo(rope.points[i].x, rope.points[i].y);
+        ctx.strokeStyle = "rgba(220,180,100,0.85)";
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = "round"; ctx.lineJoin = "round";
+        ctx.shadowColor = "rgba(255,200,80,0.5)"; ctx.shadowBlur = 6;
+        ctx.stroke(); ctx.shadowBlur = 0;
+        ctx.restore();
+      }
+
+      function drawEnvFlat(x, y, w, h, tilt, alpha) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate((tilt * Math.PI) / 180);
+        ctx.globalAlpha = alpha;
+        ctx.save();
+        ctx.globalAlpha = alpha * 0.22;
+        ctx.beginPath();
+        ctx.ellipse(0, h * 0.56, w * 0.42, w * 0.05, 0, 0, Math.PI * 2);
+        ctx.fillStyle = "#000"; ctx.fill();
+        ctx.restore();
+        const hw = w / 2, hh = h / 2;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(-hw, -hh, w, h, 8);
+        else ctx.rect(-hw, -hh, w, h);
+        const bodyG = ctx.createLinearGradient(0, -hh, 0, hh);
+        bodyG.addColorStop(0, "rgba(178,30,82,0.97)");
+        bodyG.addColorStop(1, "rgba(110,12,52,0.97)");
+        ctx.fillStyle = bodyG; ctx.fill();
+        ctx.strokeStyle = "rgba(60,3,25,0.9)"; ctx.lineWidth = 2; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-hw + 2, hh - 2); ctx.lineTo(0, hh * 0.1); ctx.lineTo(hw - 2, hh - 2); ctx.closePath();
+        ctx.fillStyle = "rgba(80,6,36,0.97)"; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-hw + 2, -hh + 2); ctx.lineTo(-hw + 2, hh - 2); ctx.lineTo(0, hh * 0.1); ctx.closePath();
+        ctx.fillStyle = "rgba(100,10,48,0.92)"; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(hw - 2, -hh + 2); ctx.lineTo(hw - 2, hh - 2); ctx.lineTo(0, hh * 0.1); ctx.closePath();
+        ctx.fillStyle = "rgba(100,10,48,0.92)"; ctx.fill();
+        const flapG = ctx.createLinearGradient(0, -hh, 0, 0);
+        flapG.addColorStop(0, "rgba(220,60,115,0.99)");
+        flapG.addColorStop(1, "rgba(160,28,78,0.97)");
+        ctx.beginPath(); ctx.moveTo(-hw + 2, -hh + 2); ctx.lineTo(0, hh * 0.58); ctx.lineTo(hw - 2, -hh + 2); ctx.closePath();
+        ctx.fillStyle = flapG; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-hw + 4, -hh + 2); ctx.lineTo(hw - 4, -hh + 2);
+        ctx.strokeStyle = "rgba(255,150,195,0.3)"; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.restore();
+      }
+
+      // ---- HELPERS ----
+      function easeOut(x) { return 1 - Math.pow(1 - Math.max(0, Math.min(x, 1)), 3); }
+      function easeInOut(x) { return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; }
+      function lerp(a, b, t) { return a + (b - a) * t; }
+
+      function irregularEase(x, type) {
+        x = Math.max(0, Math.min(x, 1));
+        if (type === 0) {
+          if (x < 0.55) return easeOut(x / 0.55) * 0.75;
+          const pause = Math.sin(((x - 0.55) / 0.45) * Math.PI * 0.5) * 0.04;
+          return 0.75 + easeOut((x - 0.55) / 0.45) * 0.25 + pause * (1 - (x - 0.55) / 0.45);
+        } else if (type === 1) {
+          return easeInOut(x) + Math.sin(x * Math.PI) * 0.04 * (1 - x);
+        } else {
+          if (x < 0.45) return easeOut(x / 0.45) * 0.6;
+          if (x < 0.58) return 0.6 + Math.sin(((x - 0.45) / 0.13) * Math.PI) * 0.03;
+          return 0.6 + easeOut((x - 0.58) / 0.42) * 0.4;
+        }
+      }
+
+      function drawGrass(x, base, h, lean, lw, col, prog, ripple = 0) {
+        const ph = h * prog, pl = lean * prog + ripple;
+        const gap = lw * 1.1, ddx = pl, ddy = -ph, len = Math.sqrt(ddx * ddx + ddy * ddy) || 1;
+        const nx = (-ddy / len) * gap * 0.5, ny = (ddx / len) * gap * 0.5;
+        for (let s = -1; s <= 1; s += 2) {
+          const ox = nx * s, oy = ny * s;
+          ctx.beginPath();
+          ctx.moveTo(x + ox, base + oy);
+          ctx.bezierCurveTo(x + pl * 0.15 + ox * 0.7, base - ph * 0.3 + oy * 0.7, x + pl * 0.85 + ox * 0.2, base - ph * 0.65 + oy * 0.2, x + pl, base - ph);
+          ctx.strokeStyle = col; ctx.lineWidth = lw * 0.55; ctx.lineCap = "round"; ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.moveTo(x, base);
+        ctx.bezierCurveTo(x + pl * 0.15, base - ph * 0.3, x + pl * 0.85, base - ph * 0.65, x + pl, base - ph);
+        const m = col.match(/[\d.]+/g);
+        ctx.strokeStyle = `rgba(${m[0]},${m[1]},${m[2]},${parseFloat(m[3]) * 0.3})`;
+        ctx.lineWidth = lw * 0.3; ctx.stroke();
+      }
+      function leafFn(x, y, len, angle, col) {
+        ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
+        ctx.beginPath();
+        ctx.ellipse(0, -len / 2, len * 0.38, len / 2, 0, 0, Math.PI * 2);
+        ctx.fillStyle = col; ctx.fill(); ctx.restore();
+      }
+      function _petalShape(halfW, height, alpha, c0, c1, c2, sz) {
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.bezierCurveTo(-halfW * 0.6, -height * 0.25, -halfW, -height * 0.55, -halfW * 0.65, -height * 0.82);
+        ctx.bezierCurveTo(-halfW * 0.3, -height * 0.95, halfW * 0.3, -height * 0.95, halfW * 0.65, -height * 0.82);
+        ctx.bezierCurveTo(halfW, -height * 0.55, halfW * 0.6, -height * 0.25, 0, 0);
+        const g = ctx.createRadialGradient(0, -height * 0.45, sz * 0.05, 0, -height * 0.45, halfW * 1.4);
+        g.addColorStop(0, c0); g.addColorStop(0.45, c1); g.addColorStop(1, c2);
+        ctx.fillStyle = g; ctx.fill();
+      }
+      function flower(x, y, sz, alpha, headRot) {
+        ctx.save(); ctx.translate(x, y); ctx.rotate(headRot || 0);
+        ctx.shadowColor = `rgba(50,90,220,${alpha * 0.7})`; ctx.shadowBlur = 18;
+        const L = [[30, 55, 180], [65, 100, 225], [110, 150, 255], [175, 205, 255]];
+        const petal = (hw, ht, c1, c2, c3) => _petalShape(hw, ht, alpha,
+          `rgba(${c1[0]},${c1[1]},${c1[2]},${alpha})`,
+          `rgba(${c2[0]},${c2[1]},${c2[2]},${alpha})`,
+          `rgba(${c3[0]},${c3[1]},${c3[2]},${alpha * 0.85})`, sz);
+        for (let i = 0; i < 3; i++) {
+          ctx.save(); ctx.rotate(((Math.PI * 2) / 3) * i - Math.PI / 2);
+          petal(sz * 0.58, sz * 1.45, L[1], L[2], L[3]); ctx.restore();
+        }
+        for (let i = 0; i < 3; i++) {
+          ctx.save(); ctx.rotate(((Math.PI * 2) / 3) * i - Math.PI / 2 + Math.PI / 3);
+          petal(sz * 0.44, sz * 1.62, L[2], L[3], [255, 255, 255]);
+          ctx.save(); ctx.scale(0.72, 0.82); petal(sz * 0.44, sz * 1.62, L[1], L[2], L[3]); ctx.restore();
+          ctx.save(); ctx.scale(0.42, 0.55); petal(sz * 0.44, sz * 1.62, L[0], L[1], L[2]); ctx.restore();
+          ctx.restore();
+        }
+        const bg = ctx.createRadialGradient(0, 0, 0, 0, 0, sz * 0.38);
+        bg.addColorStop(0, `rgba(${L[0][0]},${L[0][1]},${L[0][2]},${alpha * 0.7})`);
+        bg.addColorStop(1, "transparent");
+        ctx.beginPath();
+        ctx.ellipse(0, 0, sz * 0.38, sz * 0.16, 0, 0, Math.PI * 2);
+        ctx.fillStyle = bg; ctx.fill(); ctx.shadowBlur = 0; ctx.restore();
+      }
+      function glow(x, y, r, col) {
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, col); g.addColorStop(1, "transparent");
+        ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+      }
+
+      function drawSprout(bx, by, h, lean, lw, prog) {
+        const sp = Math.min(prog, 1);
+        const sprH = h * 0.18 * sp;
+        const curl = lean * 0.08;
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        ctx.quadraticCurveTo(bx + curl * sp, by - sprH * 0.5, bx + curl * sp * 1.4, by - sprH);
+        ctx.strokeStyle = `rgba(60,140,40,${0.85 * sp})`;
+        ctx.lineWidth = lw * 0.7; ctx.lineCap = "round"; ctx.stroke();
+        const bud = lw * 1.6 * sp;
+        ctx.beginPath();
+        ctx.arc(bx + curl * sp * 1.4, by - sprH, bud, 0, Math.PI * 2);
+        const g = ctx.createRadialGradient(bx + curl * sp * 1.4, by - sprH, 0, bx + curl * sp * 1.4, by - sprH, bud * 2);
+        g.addColorStop(0, `rgba(120,200,60,${sp})`);
+        g.addColorStop(1, `rgba(40,110,20,${sp * 0.6})`);
+        ctx.fillStyle = g; ctx.fill();
+      }
+
+      function buildStem(bx, by, h, lean, lw, leaves, flSz, sw, prog, curve, stemWindOff, headRot) {
+        const c = curve !== undefined ? curve : 0.35;
+        const curl = lean * 0.18, hr = Math.min(Math.abs(lean) / 80, 1) * 20;
+        const totalLean = lean + (stemWindOff || 0);
+        const cpx = bx + totalLean * c * 1.14 + sw * 0.3, cpy = by - h * 0.5;
+        const ex = bx + totalLean + sw + curl, ey = by - h + Math.abs(curl) * 0.4 + hr;
+        const cp2x = bx + totalLean * (c * 1.14 + 0.46) + curl * 0.7, cp2y = by - h * 0.82;
+        const bp = (tt) => ({
+          x: (1 - tt) ** 3 * bx + 3 * (1 - tt) ** 2 * tt * cpx + 3 * (1 - tt) * tt ** 2 * cp2x + tt ** 3 * ex,
+          y: (1 - tt) ** 3 * by + 3 * (1 - tt) ** 2 * tt * cpy + 3 * (1 - tt) * tt ** 2 * cp2y + tt ** 3 * ey,
+        });
+        if (prog < 0.15) { drawSprout(bx, by, h, lean, lw, prog / 0.15); return; }
+        const stemProg = prog < 0.8 ? (prog - 0.15) / 0.65 : 1.0;
+        ctx.beginPath(); ctx.moveTo(bx, by);
+        for (let i = 1; i <= 30; i++) {
+          const tt = (i / 30) * stemProg;
+          ctx.lineTo(
+            (1 - tt) ** 3 * bx + 3 * (1 - tt) ** 2 * tt * cpx + 3 * (1 - tt) * tt ** 2 * cp2x + tt ** 3 * ex,
+            (1 - tt) ** 3 * by + 3 * (1 - tt) ** 2 * tt * cpy + 3 * (1 - tt) * tt ** 2 * cp2y + tt ** 3 * ey,
+          );
+        }
+        ctx.strokeStyle = "rgba(40,120,30,0.92)"; ctx.lineWidth = lw; ctx.lineCap = "round"; ctx.stroke();
+        leaves.forEach((lf) => {
+          if (stemProg < lf.t + 0.05) return;
+          const lp = Math.min((stemProg - lf.t) / 0.18, 1), p = bp(lf.t);
+          leafFn(p.x, p.y, lf.len * lp, lf.ang + sw * 0.03 * lf.side, lf.dark ? "rgba(10,55,12,0.90)" : "rgba(20,85,22,0.92)");
+        });
+        if (stemProg > 0.82) {
+          const budProg = Math.min((stemProg - 0.82) / 0.18, 1);
+          const tip = bp(1);
+          const budSz = flSz * 0.22 * easeOut(budProg);
+          ctx.save(); ctx.translate(tip.x, tip.y);
+          ctx.beginPath();
+          ctx.ellipse(0, -budSz * 0.9, budSz * 0.45, budSz, 0, 0, Math.PI * 2);
+          const bg2 = ctx.createRadialGradient(0, -budSz, 0, 0, -budSz, budSz * 1.2);
+          bg2.addColorStop(0, `rgba(180,220,60,${budProg})`);
+          bg2.addColorStop(0.6, `rgba(80,160,30,${budProg * 0.9})`);
+          bg2.addColorStop(1, `rgba(40,100,20,${budProg * 0.5})`);
+          ctx.fillStyle = bg2; ctx.fill();
+          for (let s = -1; s <= 1; s += 2) {
+            ctx.beginPath(); ctx.moveTo(0, 0);
+            ctx.quadraticCurveTo(s * budSz * 0.7, -budSz * 0.5, s * budSz * 0.4, -budSz * 1.5);
+            ctx.strokeStyle = `rgba(50,130,25,${budProg * 0.8})`; ctx.lineWidth = lw * 0.5; ctx.stroke();
+          }
+          ctx.restore();
+        }
+        if (prog > 0.8) {
+          const fp = easeOut((prog - 0.8) / 0.2);
+          const tip = bp(1);
+          const popScale = fp < 0.7 ? fp / 0.7 : 1.0 + Math.sin(((fp - 0.7) / 0.3) * Math.PI) * 0.12 * (1 - fp);
+          ctx.save(); ctx.translate(tip.x, tip.y); ctx.scale(popScale, popScale); ctx.translate(-tip.x, -tip.y);
+          flower(tip.x, tip.y, flSz, 0.93 * fp, headRot || 0); ctx.restore();
+          if (fp < 0.5) { const glowA = ((0.5 - fp) / 0.5) * 0.4; glow(tip.x, tip.y, flSz * 2, `rgba(150,180,255,${glowA})`); }
+        }
+      }
+
+      // ---- DOG DRAW ----
+      function drawDog(x, y, size, legPhase, alpha, isCarrying, facingLeft, tailWag) {
+        ctx.save(); ctx.translate(x, y);
+        if (facingLeft) ctx.scale(-1, 1);
+        ctx.globalAlpha = alpha;
+        const s = size;
+        ctx.save(); ctx.globalAlpha = alpha * 0.15;
+        ctx.beginPath(); ctx.ellipse(0, s * 0.05, s * 0.7, s * 0.1, 0, 0, Math.PI * 2);
+        ctx.fillStyle = "#000"; ctx.fill(); ctx.restore();
+        const tailAngle = -0.5 + Math.sin(tailWag * 7) * 0.8;
+        ctx.save(); ctx.translate(-s * 0.55, -s * 0.25); ctx.rotate(tailAngle);
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(s * 0.2, -s * 0.3, s * 0.1, -s * 0.52);
+        ctx.strokeStyle = "rgba(190,120,40,0.95)"; ctx.lineWidth = s * 0.14; ctx.lineCap = "round"; ctx.stroke();
+        ctx.beginPath(); ctx.arc(s * 0.1, -s * 0.52, s * 0.1, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(240,200,130,0.9)"; ctx.fill(); ctx.restore();
+        ctx.beginPath(); ctx.ellipse(0, -s * 0.26, s * 0.52, s * 0.28, 0.1, 0, Math.PI * 2);
+        const bg = ctx.createRadialGradient(-s * 0.1, -s * 0.38, 0, 0, -s * 0.26, s * 0.6);
+        bg.addColorStop(0, "rgba(245,185,75,0.98)"); bg.addColorStop(0.5, "rgba(210,138,45,0.97)"); bg.addColorStop(1, "rgba(158,85,15,0.9)");
+        ctx.fillStyle = bg; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(s * 0.08, -s * 0.16, s * 0.22, s * 0.13, 0.1, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,230,180,0.65)"; ctx.fill();
+        const ls = Math.sin(legPhase) * 0.4;
+        [[s * 0.28, -s * 0.05, 1], [s * 0.28, -s * 0.05, -1], [-s * 0.28, -s * 0.05, -1], [-s * 0.28, -s * 0.05, 1]].forEach(([bx, by, side], idx) => {
+          const swing = (idx < 2 ? ls : -ls) * side;
+          ctx.save(); ctx.translate(bx, by); ctx.rotate(swing);
+          ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(s * 0.05, s * 0.2);
+          ctx.strokeStyle = "rgba(195,125,35,0.95)"; ctx.lineWidth = s * 0.12; ctx.lineCap = "round"; ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(s * 0.05, s * 0.2); ctx.lineTo(s * 0.04, s * 0.4);
+          ctx.strokeStyle = "rgba(172,105,20,0.92)"; ctx.lineWidth = s * 0.1; ctx.stroke();
+          ctx.beginPath(); ctx.ellipse(s * 0.04, s * 0.42, s * 0.08, s * 0.05, 0, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(150,85,15,0.9)"; ctx.fill(); ctx.restore();
+        });
+        ctx.beginPath(); ctx.ellipse(s * 0.3, -s * 0.4, s * 0.17, s * 0.19, -0.3, 0, Math.PI * 2);
+        const ng = ctx.createRadialGradient(s * 0.26, -s * 0.46, 0, s * 0.3, -s * 0.4, s * 0.22);
+        ng.addColorStop(0, "rgba(248,190,82,0.98)"); ng.addColorStop(1, "rgba(185,115,25,0.9)");
+        ctx.fillStyle = ng; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(s * 0.5, -s * 0.6, s * 0.31, s * 0.27, 0.15, 0, Math.PI * 2);
+        const hg = ctx.createRadialGradient(s * 0.42, -s * 0.68, 0, s * 0.5, -s * 0.6, s * 0.38);
+        hg.addColorStop(0, "rgba(252,198,88,1)"); hg.addColorStop(0.6, "rgba(218,152,42,0.98)"); hg.addColorStop(1, "rgba(168,98,12,0.9)");
+        ctx.fillStyle = hg; ctx.fill();
+        ctx.strokeStyle = "rgba(128,68,8,0.25)"; ctx.lineWidth = s * 0.012; ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(s * 0.73, -s * 0.54, s * 0.17, s * 0.13, 0.1, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,218,158,0.95)"; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(s * 0.83, -s * 0.58, s * 0.07, s * 0.05, 0.1, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(55,18,8,0.92)"; ctx.fill();
+        ctx.beginPath(); ctx.arc(s * 0.81, -s * 0.61, s * 0.02, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,255,255,0.65)"; ctx.fill();
+        if (!isCarrying) {
+          ctx.beginPath(); ctx.arc(s * 0.77, -s * 0.5, s * 0.06, 0.2, Math.PI - 0.2);
+          ctx.strokeStyle = "rgba(138,58,28,0.8)"; ctx.lineWidth = s * 0.025; ctx.stroke();
+          ctx.beginPath(); ctx.ellipse(s * 0.77, -s * 0.45, s * 0.05, s * 0.07, 0, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(240,75,75,0.85)"; ctx.fill();
+        } else {
+          ctx.beginPath(); ctx.moveTo(s * 0.66, -s * 0.5); ctx.lineTo(s * 0.87, -s * 0.5);
+          ctx.strokeStyle = "rgba(138,58,28,0.7)"; ctx.lineWidth = s * 0.02; ctx.stroke();
+        }
+        ctx.beginPath(); ctx.arc(s * 0.58, -s * 0.68, s * 0.07, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(28,12,3,0.95)"; ctx.fill();
+        ctx.beginPath(); ctx.arc(s * 0.55, -s * 0.71, s * 0.025, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,255,255,0.82)"; ctx.fill();
+        ctx.save(); ctx.translate(s * 0.33, -s * 0.8); ctx.rotate(-0.35 + Math.sin(tailWag * 4) * 0.1);
+        ctx.beginPath(); ctx.ellipse(0, s * 0.15, s * 0.1, s * 0.23, -0.2, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(175,95,18,0.95)"; ctx.fill(); ctx.restore();
+        ctx.save(); ctx.translate(s * 0.57, -s * 0.83); ctx.rotate(0.28 + Math.sin(tailWag * 4 + 0.5) * 0.07);
+        ctx.beginPath(); ctx.ellipse(0, s * 0.12, s * 0.09, s * 0.2, 0.2, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(175,95,18,0.95)"; ctx.fill(); ctx.restore();
+        ctx.beginPath(); ctx.arc(s * 0.38, -s * 0.48, s * 0.16, -2.1, 0.9);
+        ctx.strokeStyle = "rgba(220,55,75,0.95)"; ctx.lineWidth = s * 0.065; ctx.lineCap = "round"; ctx.stroke();
+        ctx.beginPath(); ctx.arc(s * 0.5, -s * 0.34, s * 0.05, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,195,45,0.9)"; ctx.fill();
+        ctx.globalAlpha = 1; ctx.restore();
+      }
+
+      function drawPawPrint(p) {
+        ctx.save(); ctx.globalAlpha = p.life * 0.45;
+        const s = dog.size * 0.12;
+        ctx.fillStyle = "rgba(175,115,38,0.7)";
+        ctx.beginPath(); ctx.ellipse(p.x, p.y, s * 0.6, s * 0.42, 0, 0, Math.PI * 2); ctx.fill();
+        [[-0.4, -0.62], [0, -0.78], [0.4, -0.62], [-0.65, -0.22], [0.65, -0.22]].forEach(([dx, dy]) => {
+          ctx.beginPath(); ctx.arc(p.x + dx * s, p.y + dy * s, s * 0.22, 0, Math.PI * 2); ctx.fill();
+        });
+        ctx.restore();
+      }
+
+      // ---- INTERACTION ----
+      let envelopeClicked = false;
+      function clickEnvelope() {
+        const scene = document.getElementById("env-scene");
+        const hint = document.getElementById("env-hint");
+        if (!envelopeClicked) {
+          envelopeClicked = true;
+          hint.classList.remove("visible");
+          scene.classList.add("opened");
+          if (growStart === null) growStart = t;
+          setTimeout(() => { hint.textContent = "Nhấn để đóng"; hint.classList.add("visible"); }, 2400);
+        } else {
+          envelopeClicked = false;
+          scene.classList.remove("opened");
+          hint.classList.remove("visible");
+          setTimeout(() => { hint.textContent = "Nhấn vào để mở thư"; hint.classList.add("visible"); }, 800);
+        }
+      }
+
+      function isNearDog(mx, my) {
+        if (!dog.landed || dogFly.active) return false;
+        const dx = mx - dog.x, dy = my - dog.y;
+        return Math.sqrt(dx * dx + dy * dy) < dog.size * 3.5;
+      }
+      function isNearFlowerBush(mx, my) {
+        for (const s of stems) {
+          const fx = CX + s.ox + s.lean, fy = groundY - s.h;
+          const dx = mx - fx, dy = my - fy;
+          if (Math.sqrt(dx * dx + dy * dy) < s.flSz * 2.2) return { fx, fy, s };
+        }
+        return null;
+      }
+      function isNearGrass(mx, my) {
+        const allBlades = [...fgBlades, ...midBlades];
+        let best = null, bestD = 9999;
+        for (const b of allBlades) {
+          const bx = CX + b.x, by = groundY;
+          const tipX = bx + b.lean, tipY = by - b.h;
+          const dx = mx - tipX, dy = my - tipY;
+          const d = Math.sqrt(dx * dx + dy * dy);
+          if (d < b.h * 0.35 && d < bestD) { bestD = d; best = { b, bx, by }; }
+        }
+        return best;
+      }
+
+      // ---- UNIFIED POINTER INTERACTION (used by both mouse hover and touch) ----
+      function handlePointerInteraction(mx, my, isTap) {
+        if (seqPhase !== "full") return;
+
+        const ge2 = growStart !== null ? t - growStart : -9999;
+        const STEM_DUR = 10.0;
+        const stemGlobalProg = growStart !== null ? easeInOut(Math.min(Math.max(ge2, 0) / STEM_DUR, 1)) : 0;
+
+        // Dog interaction
+        if (isNearDog(mx, my)) {
+          setCursorHover("dog", "🐶 Xoa đầu chó nào!");
+          if (!dogFly.active && !dogHoverTriggered) {
+            dogHoverTriggered = true;
+            dogFly.active = true;
+            dogFly.phase = "away";
+            dogFly.awayT = 0; dogFly.returnT = 0;
+            dogFly.startX = dog.x; dogFly.startY = dog.y;
+            dogFly.awayX = CX + (Math.random() > 0.5 ? 1 : -1) * W * 0.25;
+            dogFly.awayY = groundY;
+          }
+          return;
+        } else {
+          dogHoverTriggered = false;
+        }
+
+        // Flower bush interaction
+        const fh = isNearFlowerBush(mx, my);
+        if (fh && stemGlobalProg > 0.8) {
+          setCursorHover("flower", "🦋 Bướm bay ra!");
+          if (prevHoverType !== "flower") {
+            bushShake.active = true; bushShake.t = 0; bushShake.intensity = 0.45;
+          }
+          flowerHoverTimer++;
+          // On tap, burst more butterflies; on move, normal rate
+          const spawnRate = isTap ? 1 : 18;
+          if (isTap || flowerHoverTimer % spawnRate === 0) {
+            spawnButterfly(fh.fx, fh.fy);
+          }
+          return;
+        } else {
+          flowerHoverTimer = 0;
+        }
+
+        // Grass interaction
+        const gh = isNearGrass(mx, my);
+        if (gh) {
+          setCursorHover("grass", "🌸 Hoa nở!");
           grassHoverTimer++;
-          if(grassHoverTimer%20===0){
-            const b=gh.b;
-            const tipX=gh.bx+b.lean;
-            const tipY=groundY-b.h;
-            // kiểm tra chưa có hoa ở gần đó
-            const exists=grassFlowers.some(f=>Math.abs(f.tipX-tipX)<12);
-            if(!exists){
+          const spawnRate = isTap ? 1 : 20;
+          if (isTap || grassHoverTimer % spawnRate === 0) {
+            const b = gh.b;
+            const tipX = gh.bx + b.lean;
+            const tipY = groundY - b.h;
+            const exists = grassFlowers.some((f) => Math.abs(f.tipX - tipX) < 12);
+            if (!exists) {
               grassFlowers.push({
-                tipX, tipY,
-                prog:0,
-                hue:280+Math.random()*120,  // tím→hồng→đỏ
-                sz:(5+Math.random()*5)*MS,
-                born:t,
-                fadingAt: t+5+Math.random()*4,
+                tipX, tipY, prog: 0,
+                hue: 280 + Math.random() * 120,
+                sz: (5 + Math.random() * 5) * MS,
+                born: t,
+                fadingAt: t + 5 + Math.random() * 4,
               });
             }
           }
+          return;
         } else {
-          grassHoverTimer=0;
+          grassHoverTimer = 0;
         }
-        // hover flower fallback: đom đóm (giữ tính năng cũ)
-        if(fh){
-          curHoverType="flower";hintText="✨ Đom đóm tỏa ra...";
-          if(prevHoverType!=="flower"){bushShake.active=true;bushShake.t=0;bushShake.intensity=0.45;}
-          hoverFireflyTimer++;
-          if(hoverFireflyTimer%8===0){
-            const angle=-Math.PI*0.5+(Math.random()-0.5)*Math.PI*1.5,spd=0.08+Math.random()*0.22;
-            hoverFireflies.push({x:fh.fx,y:fh.fy,vx:Math.cos(angle)*spd,vy:Math.sin(angle)*spd-0.06,r:1.2+Math.random()*1.8,phase:Math.random()*Math.PI*2,blinkSpd:0.03+Math.random()*0.05,hue:40+Math.random()*40,life:1.0,decay:0.003+Math.random()*0.004});
+      }
+
+      // ---- SEQUENCE CONTROLLER ----
+      let seqPhase = "card";
+      let dogEnterT = 0, dogTurnT = 0, dogPullT = 0, envPlaceT = 0, dogReturnT = 0;
+      let dogIdlePhase = 0;
+      let hoverFireflyTimer = 0;
+
+      function openCard() {
+        document.getElementById("card").classList.add("hide");
+        phase = "scene";
+        seqPhase = "dog-enter";
+        dogEnterT = 0;
+        dog.x = -dog.size; dog.y = groundY;
+        dog.landed = false; dog.notified = false;
+        dog.facingLeft = false;
+        growStart = null;
+        setTimeout(showTouchHint, 8000);
+      }
+
+      function positionEnvelopeEl(x, y) {
+        const wrapper = document.getElementById("env-wrapper");
+        wrapper.style.transition = "none";
+        wrapper.style.left = x + "px";
+        wrapper.style.top = y + "px";
+        wrapper.style.transform = "translateX(-50%)";
+      }
+      function computeEnvFinalPos() {
+        return { x: W / 2, y: H * 0.28 };
+      }
+
+      const cursorTrail = [];
+
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
+
+        if (phase === "card") { t += 0.016; requestAnimationFrame(draw); return; }
+
+        let gp = 0;
+        if (growStart !== null) { const ge = t - growStart; gp = Math.min(ge / GROW_DUR, 1); }
+
+        const _windBase = Math.sin(t * 0.38) * 0.6 + Math.sin(t * 0.17) * 0.4;
+        const sw = Math.sin(t * 0.55) * 5 + Math.sin(t * 0.83) * 3 + _windBase * 14;
+
+        const ge2 = growStart !== null ? t - growStart : -9999;
+        const STEM_DUR = 10.0;
+        const stemGlobalProg = growStart !== null ? easeInOut(Math.min(Math.max(ge2, 0) / STEM_DUR, 1)) : 0;
+
+        // Mouse hover interactions (desktop)
+        let curHoverType = null, hintText = null;
+        if (seqPhase === "full") {
+          if (isNearDog(mousePos.x, mousePos.y)) {
+            curHoverType = "dog"; hintText = "🐶 Xoa đầu chó nào!";
+            if (prevHoverType !== "dog" && !dogFly.active && !dogHoverTriggered) {
+              dogHoverTriggered = true; dogFly.active = true; dogFly.phase = "away";
+              dogFly.awayT = 0; dogFly.returnT = 0;
+              dogFly.startX = dog.x; dogFly.startY = dog.y;
+              dogFly.awayX = CX + (Math.random() > 0.5 ? 1 : -1) * W * 0.25;
+              dogFly.awayY = groundY;
+            }
+          } else {
+            if (prevHoverType === "dog") dogHoverTriggered = false;
+            const fh = isNearFlowerBush(mousePos.x, mousePos.y);
+            if (fh && stemGlobalProg > 0.8) {
+              curHoverType = "flower"; hintText = "🦋 Bướm bay ra!";
+              if (prevHoverType !== "flower") { bushShake.active = true; bushShake.t = 0; bushShake.intensity = 0.45; }
+              flowerHoverTimer++;
+              if (flowerHoverTimer % 18 === 0) spawnButterfly(fh.fx, fh.fy);
+            } else {
+              flowerHoverTimer = 0;
+              const gh = isNearGrass(mousePos.x, mousePos.y);
+              if (gh) {
+                curHoverType = "grass"; hintText = "🌸 Hoa nở!";
+                grassHoverTimer++;
+                if (grassHoverTimer % 20 === 0) {
+                  const b = gh.b;
+                  const tipX = gh.bx + b.lean, tipY = groundY - b.h;
+                  const exists = grassFlowers.some((f) => Math.abs(f.tipX - tipX) < 12);
+                  if (!exists) grassFlowers.push({ tipX, tipY, prog: 0, hue: 280 + Math.random() * 120, sz: (5 + Math.random() * 5) * MS, born: t, fadingAt: t + 5 + Math.random() * 4 });
+                }
+              } else {
+                grassHoverTimer = 0;
+              }
+              if (fh) {
+                curHoverType = "flower"; hintText = "✨ Đom đóm tỏa ra...";
+                if (prevHoverType !== "flower") { bushShake.active = true; bushShake.t = 0; bushShake.intensity = 0.45; }
+                hoverFireflyTimer++;
+                if (hoverFireflyTimer % 8 === 0) {
+                  const angle = -Math.PI * 0.5 + (Math.random() - 0.5) * Math.PI * 1.5, spd = 0.08 + Math.random() * 0.22;
+                  hoverFireflies.push({ x: fh.fx, y: fh.fy, vx: Math.cos(angle) * spd, vy: Math.sin(angle) * spd - 0.06, r: 1.2 + Math.random() * 1.8, phase: Math.random() * Math.PI * 2, blinkSpd: 0.03 + Math.random() * 0.05, hue: 40 + Math.random() * 40, life: 1.0, decay: 0.003 + Math.random() * 0.004 });
+                }
+              }
+            }
           }
         }
+        prevHoverType = curHoverType;
+        if (curHoverType !== undefined) setCursorHover(curHoverType, hintText);
+
+        // update + draw hoa mini
+        for (let i = grassFlowers.length - 1; i >= 0; i--) {
+          const f = grassFlowers[i];
+          const fadeAge = t - f.fadingAt;
+          if (fadeAge > 0) { f.prog = Math.max(0, f.prog - 0.018); if (f.prog <= 0) { grassFlowers.splice(i, 1); continue; } }
+          else f.prog = Math.min(f.prog + 0.022, 1);
+          drawMiniFlower(f.tipX, f.tipY, f.sz, f.prog, f.hue);
+        }
+
+        let shakeOff = 0;
+        if (bushShake.active) {
+          bushShake.t += 0.016; bushShake.intensity = Math.max(0, 1 - bushShake.t / 1.8);
+          shakeOff = Math.sin(bushShake.t * 22) * 22 * bushShake.intensity;
+          if (bushShake.intensity <= 0) bushShake.active = false;
+        }
+
+        for (let i = grassWaves.length - 1; i >= 0; i--) { grassWaves[i].t += 0.016; if (grassWaves[i].t > 1.0) grassWaves.splice(i, 1); }
+        function getGrassRipple(bx) {
+          let r = 0;
+          for (const w of grassWaves) {
+            const d = Math.abs(bx - w.x), wr = w.t * 110;
+            const wf = Math.abs(d - wr), sw2 = 20 + w.t * 12;
+            if (wf < sw2) { const td = Math.pow(Math.max(0, 1 - w.t / 0.8), 2), dd = Math.exp(-d * 0.012); r += Math.cos((wf / sw2) * Math.PI * 0.5) * 18 * td * dd; }
+          }
+          return r;
+        }
+
+        // --- GRASS & STEMS ---
+        bgBlades.forEach((b) => {
+          const raw = Math.max(0, (ge2 - b.delay) / b.growDur); if (raw <= 0) return;
+          const p = irregularEase(Math.min(raw, 1), b.easingType);
+          drawGrass(CX + b.x, groundY, b.h, b.lean + Math.sin(t * 0.5 + b.phase) * 5 + _windBase * b.h * 0.04, b.lw, `rgba(${30 + Math.round(b.alpha * 20)},${90 + Math.round(b.alpha * 40)},${25 + Math.round(b.alpha * 15)},${b.alpha * p})`, p, getGrassRipple(CX + b.x) * 0.3);
+        });
+        stems.forEach((s) => {
+          if (stemGlobalProg <= 0) return;
+          const wf = _windBase, hf = s.h / (SHB * MS);
+          const swo = wf * s.h * 0.055 * hf * s.swayFactor;
+          const ps = Math.sin(t * s.swayFreq + s.swayPhase) * 6 * s.swayFactor + Math.sin(t * s.swayFreq * 1.7 + s.swayPhase) * 2 * s.swayFactor;
+          const hwr = wf * 0.18 * hf * s.swayFactor + Math.sin(t * s.swayFreq * 2.1 + s.swayPhase + 1.2) * 0.08 * s.swayFactor;
+          buildStem(CX + s.ox, groundY, s.h, s.lean + shakeOff * s.swayFactor, s.lw, s.leaves, s.flSz, sw * s.swayFactor + ps + shakeOff * s.swayFactor * 0.5, stemGlobalProg, s.curve, swo, hwr);
+          if (stemGlobalProg > 0.82 && !s._butterflySpawned) {
+            s._butterflySpawned = true;
+            const tipX = CX + s.ox + s.lean + sw * s.swayFactor * 0.5, tipY = groundY - s.h + 8;
+            const count = 1 + Math.floor(Math.random() * 2);
+            for (let i = 0; i < count; i++) setTimeout(() => spawnButterfly(tipX, tipY), i * 300 + Math.random() * 800);
+          }
+        });
+        const midOx = stems.reduce((a, s) => a + s.ox, 0) / stems.length;
+        glow(CX + midOx, groundY - 200 * MS, 120 * MS, `rgba(180,80,255,${0.11 * gp})`);
+        midBlades.forEach((b) => {
+          const raw = Math.max(0, (ge2 - b.delay) / b.growDur); if (raw <= 0) return;
+          const p = irregularEase(Math.min(raw, 1), b.easingType);
+          drawGrass(CX + b.x, groundY, b.h, b.lean + Math.sin(t * 0.6 + b.phase) * 6 + _windBase * b.h * 0.05, b.lw, `rgba(${45 + Math.round(b.alpha * 25)},${130 + Math.round(b.alpha * 40)},${35 + Math.round(b.alpha * 20)},${b.alpha * p})`, p, getGrassRipple(CX + b.x) * 0.5);
+        });
+        fgBlades.forEach((b) => {
+          const raw = Math.max(0, (ge2 - b.delay) / b.growDur); if (raw <= 0) return;
+          const p = irregularEase(Math.min(raw, 1), b.easingType);
+          drawGrass(CX + b.x, groundY, b.h, b.lean + Math.sin(t * 0.7 + b.phase) * 7 + _windBase * b.h * 0.06, b.lw, `rgba(${60 + Math.round(b.alpha * 20)},${160 + Math.round(b.alpha * 30)},${45 + Math.round(b.alpha * 20)},${b.alpha * p})`, p, getGrassRipple(CX + b.x) * 0.8);
+        });
+
+        if (gp > 0.6) {
+          const sp = Math.min((gp - 0.6) / 0.4, 1);
+          sparks.forEach((pk) => {
+            pk.phase += pk.spd;
+            const a = (Math.sin(pk.phase) * 0.5 + 0.5) * 0.88 * sp;
+            if (a < 0.01) return;
+            ctx.save(); ctx.beginPath(); ctx.arc(pk.x, pk.y, pk.r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255,210,232,${a})`; ctx.shadowColor = "rgba(255,175,210,1)"; ctx.shadowBlur = 8; ctx.fill(); ctx.restore();
+          });
+        }
+
+        fireflies.forEach((f) => {
+          f.phase += f.blinkSpd;
+          if (gp > 0.8 && !f.risen) { f.y += f.vy; if (f.y <= f.targetY) { f.y = f.targetY; f.risen = true; f.vy = -(Math.random() * 0.04 + 0.02); } }
+          else if (f.risen) { f.x += f.vx + Math.sin(f.phase * 0.7) * 0.08; f.y += f.vy + Math.cos(f.phase * 0.5) * 0.06; if (f.x < 0 || f.x > W) f.vx *= -1; if (f.y < 10 || f.y > groundY - 10) f.vy *= -1; }
+          const gl = Math.sin(f.phase) * 0.5 + 0.5, fa = gl * 0.92 * gp;
+          if (fa < 0.01) return;
+          const glR = f.r * 5 + gl * 10;
+          ctx.save();
+          const og = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, glR);
+          og.addColorStop(0, `hsla(${f.hue},100%,75%,${fa * 0.55})`); og.addColorStop(0.4, `hsla(${f.hue},100%,65%,${fa * 0.18})`); og.addColorStop(1, "transparent");
+          ctx.fillStyle = og; ctx.beginPath(); ctx.arc(f.x, f.y, glR, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(f.x, f.y, f.r * gl + 0.4, 0, Math.PI * 2);
+          ctx.fillStyle = `hsla(${f.hue},100%,92%,${fa})`; ctx.shadowColor = `hsla(${f.hue},80%,80%,0.9)`; ctx.shadowBlur = 12; ctx.fill(); ctx.restore();
+        });
+
+        for (let i = hoverFireflies.length - 1; i >= 0; i--) {
+          const f = hoverFireflies[i];
+          f.phase += f.blinkSpd; f.x += f.vx + Math.sin(f.phase * 0.8) * 0.08; f.y += f.vy + Math.cos(f.phase * 0.6) * 0.06;
+          f.vx *= 0.992; f.vy *= 0.992; f.vy += 0.001; f.life -= f.decay;
+          if (f.life <= 0) { hoverFireflies.splice(i, 1); continue; }
+          const gl = Math.sin(f.phase) * 0.5 + 0.5, fa = gl * f.life * 0.95, glR = f.r * 6 + gl * 12;
+          ctx.save();
+          const og = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, glR);
+          og.addColorStop(0, `hsla(${f.hue},100%,80%,${fa * 0.6})`); og.addColorStop(0.5, `hsla(${f.hue},100%,65%,${fa * 0.2})`); og.addColorStop(1, "transparent");
+          ctx.fillStyle = og; ctx.beginPath(); ctx.arc(f.x, f.y, glR, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(f.x, f.y, f.r * gl + 0.5, 0, Math.PI * 2);
+          ctx.fillStyle = `hsla(${f.hue},100%,95%,${fa})`; ctx.shadowColor = `hsla(${f.hue},100%,80%,0.95)`; ctx.shadowBlur = 14; ctx.fill(); ctx.restore();
+        }
+
+        // ---- BƯỚM ----
+        for (let i = butterflies.length - 1; i >= 0; i--) {
+          const b = butterflies[i];
+          const age = t - b.born;
+          b.alpha = Math.min(age / 1.2, 1);
+          if (!b.leaving && age > b.leavingAt) b.leaving = true;
+          if (b.leaving) {
+            b.cx += b.leaveVX; b.cy += b.leaveVY; b.leaveVY -= 0.003;
+            b.alpha = Math.max(0, b.alpha - (0.008 + Math.random() * 0.004));
+            if (b.alpha <= 0) { butterflies.splice(i, 1); continue; }
+          }
+          b.flapPhase += b.flapSpd * 0.016; b.angle += b.speed * 0.016;
+          b.cx += Math.sin(t * b.driftSpd + b.driftPhaseX) * 0.12;
+          b.cy += Math.cos(t * b.driftSpd * 0.7 + b.driftPhaseY) * 0.08;
+          drawButterfly(b);
+        }
+
+        for (let i = burstParticles.length - 1; i >= 0; i--) {
+          const p = burstParticles[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.06; p.life -= p.decay;
+          if (p.life <= 0) { burstParticles.splice(i, 1); continue; }
+          ctx.save(); ctx.beginPath(); ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2);
+          ctx.fillStyle = `hsla(${p.hue},100%,${p.bright}%,${p.life})`; ctx.shadowColor = `hsla(${p.hue},100%,80%,0.9)`; ctx.shadowBlur = 10; ctx.fill(); ctx.restore();
+        }
+
+        for (let i = pawPrints.length - 1; i >= 0; i--) {
+          pawPrints[i].life -= pawPrints[i].decay;
+          if (pawPrints[i].life <= 0) { pawPrints.splice(i, 1); continue; }
+          drawPawPrint(pawPrints[i]);
+        }
+
+        dog.tailWag += 0.016;
+
+        // ---- SEQUENCE ----
+        const ESZ = getEnvSize();
+        const EW = ESZ.w, EH = ESZ.h;
+        const ENV_Y = H * 0.38;
+        const DOG_RIGHT_STOP = W * 0.8;
+        const ENV_START_X = W + EW * 0.5 + 30;
+
+        if (seqPhase === "dog-enter") {
+          dogEnterT = Math.min(dogEnterT + 0.016 / 5.5, 1);
+          const tt = easeInOut(dogEnterT);
+          dog.x = lerp(-dog.size, DOG_RIGHT_STOP, tt); dog.y = groundY;
+          dog.facingLeft = false; dog.legPhase += 0.016 * 12;
+          if (Math.abs(dog.x - lastPawX) > dog.size * 0.85) { spawnPawPrint(dog.x, groundY - 2); lastPawX = dog.x; }
+          drawDog(dog.x, dog.y - dog.size * 0.44, dog.size, dog.legPhase, 1, false, false, dog.tailWag);
+          if (dogEnterT >= 1) { seqPhase = "dog-turn"; dogTurnT = 0; }
+        } else if (seqPhase === "dog-turn") {
+          dogTurnT = Math.min(dogTurnT + 0.016 / 2.0, 1);
+          dog.x = DOG_RIGHT_STOP; dog.y = groundY; dog.facingLeft = false;
+          dog.legPhase += 0.016 * (0.5 + Math.sin(dogTurnT * Math.PI) * 2);
+          const envAppearA = Math.max(0, (dogTurnT - 0.3) / 0.5);
+          if (envAppearA > 0) {
+            envSlide.active = true; envSlide.x = ENV_START_X; envSlide.y = ENV_Y; envSlide.w = EW; envSlide.h = EH; envSlide.tilt = 0;
+            drawEnvFlat(envSlide.x, envSlide.y, EW, EH, 0, Math.min(envAppearA, 1));
+            if (dogTurnT > 0.6) {
+              const mx = dog.x + dog.size * 0.85, my = dog.y - dog.size * 0.5;
+              initRope(mx, my, ENV_START_X - EW * 0.45, ENV_Y);
+              updateRope(mx, my, ENV_START_X - EW * 0.45, ENV_Y);
+              ctx.save(); ctx.globalAlpha = Math.min((dogTurnT - 0.6) / 0.3, 1); drawRope(); ctx.restore();
+            }
+          }
+          drawDog(dog.x, dog.y - dog.size * 0.44, dog.size, dog.legPhase, 1, dogTurnT > 0.6, false, dog.tailWag);
+          if (dogTurnT >= 1) {
+            seqPhase = "dog-pull"; dogPullT = 0;
+            envSlide.active = true; envSlide.x = ENV_START_X; envSlide.y = ENV_Y;
+            envSlide.startX = ENV_START_X; envSlide.finalX = CX; envSlide.finalY = H * 0.28;
+            envSlide.tilt = 0; envSlide.w = EW; envSlide.h = EH;
+            const mx = dog.x + dog.size * 0.85, my = dog.y - dog.size * 0.5;
+            initRope(mx, my, ENV_START_X - EW * 0.45, ENV_Y); dog.isCarrying = true;
+          }
+        } else if (seqPhase === "dog-pull") {
+          dogPullT = Math.min(dogPullT + 0.016 / 8.0, 1);
+          const tt = easeInOut(dogPullT);
+          dog.x = lerp(DOG_RIGHT_STOP, CX * 0.45, tt); dog.y = groundY;
+          dog.facingLeft = false; dog.legPhase -= 0.016 * 9;
+          if (Math.abs(dog.x - lastPawX) > dog.size * 0.85) { spawnPawPrint(dog.x, groundY - 2); lastPawX = dog.x; }
+          envSlide.x = lerp(envSlide.startX, CX * 1.05, easeOut(tt));
+          envSlide.y = ENV_Y + Math.sin(tt * Math.PI * 3) * 5;
+          envSlide.tilt = Math.sin(tt * Math.PI * 4) * 2.5 * (1 - tt * 0.8);
+          const mouthX = dog.x + dog.size * 0.85, mouthY = dog.y - dog.size * 0.5;
+          const ropeEndX = envSlide.x - EW * 0.45, ropeEndY = envSlide.y;
+          updateRope(mouthX, mouthY, ropeEndX, ropeEndY); drawRope();
+          drawEnvFlat(envSlide.x, envSlide.y, EW, EH, envSlide.tilt, 1);
+          drawDog(dog.x, dog.y - dog.size * 0.44, dog.size, dog.legPhase, 1, true, false, dog.tailWag);
+          if (dogPullT >= 1) { seqPhase = "env-place"; envPlaceT = 0; envSlide.startX = envSlide.x; rope.active = false; dog.isCarrying = false; }
+        } else if (seqPhase === "env-place") {
+          envPlaceT = Math.min(envPlaceT + 0.016 / 2.5, 1);
+          const tt = easeInOut(envPlaceT);
+          envSlide.x = lerp(envSlide.startX, envSlide.finalX, tt);
+          envSlide.y = lerp(ENV_Y, envSlide.finalY, tt);
+          envSlide.tilt = Math.sin(tt * Math.PI) * 6 * (1 - tt);
+          drawEnvFlat(envSlide.x, envSlide.y, EW, EH, envSlide.tilt, 1);
+          dog.x = lerp(dog.x, CX * 0.42, 0.03); dog.legPhase += 0.016 * 0.8;
+          drawDog(dog.x, dog.y - dog.size * 0.44, dog.size, dog.legPhase, 1, false, false, dog.tailWag);
+          if (envPlaceT >= 1) {
+            seqPhase = "dog-return"; dogReturnT = 0; envSlide.active = false;
+            const fp = computeEnvFinalPos(); positionEnvelopeEl(fp.x, fp.y);
+            const scene = document.getElementById("env-scene");
+            const hint = document.getElementById("env-hint");
+            scene.classList.add("show");
+            hint.style.left = fp.x + "px";
+            hint.style.top = fp.y + 140 + "px";
+            setTimeout(() => hint.classList.add("visible"), 600);
+          }
+        } else if (seqPhase === "dog-return") {
+          dogReturnT = Math.min(dogReturnT + 0.016 / 4.0, 1);
+          const tt = easeInOut(dogReturnT);
+          dog.x = lerp(dog.x, dogTarget.x, tt * 0.06 + 0.01); dog.y = groundY;
+          dog.facingLeft = dog.x > dogTarget.x; dog.legPhase += 0.016 * 8 * (1 - easeOut(dogReturnT));
+          if (Math.abs(dog.x - lastPawX) > dog.size * 0.85) { spawnPawPrint(dog.x, groundY - 2); lastPawX = dog.x; }
+          drawDog(dog.x, dog.y - dog.size * 0.44, dog.size, dog.legPhase, 1, false, dog.facingLeft, dog.tailWag);
+          if (dogReturnT >= 1) { seqPhase = "full"; dog.landed = true; dog._restX = dogTarget.x; dogIdlePhase = 0; }
+        } else if (seqPhase === "full") {
+          dogIdlePhase += 0.016;
+          if (!dogFly.active) {
+            dog.x = dogTarget.x + Math.sin(dogIdlePhase * 0.4) * 2.5; dog.y = groundY;
+            dog.legPhase += 0.016 * 0.8; dog.facingLeft = false;
+          } else {
+            if (dogFly.phase === "away") {
+              dogFly.awayT = Math.min(dogFly.awayT + 0.016 / DOG_SPEED, 1);
+              const tt = easeInOut(dogFly.awayT);
+              dog.x = lerp(dogFly.startX, dogFly.awayX, tt); dog.y = groundY;
+              dog.facingLeft = dogFly.awayX < dogFly.startX; dog.legPhase += 0.016 * 12;
+              if (Math.abs(dog.x - lastPawX) > dog.size * 0.72) { spawnPawPrint(dog.x, groundY - 2); lastPawX = dog.x; }
+              if (dogFly.awayT >= 1) { dogFly.phase = "return"; dogFly.returnT = 0; }
+            } else {
+              dogFly.returnT = Math.min(dogFly.returnT + 0.016 / DOG_RET, 1);
+              const tt = easeInOut(dogFly.returnT);
+              dog.x = lerp(dogFly.awayX, dogTarget.x, tt); dog.y = groundY;
+              dog.facingLeft = dogTarget.x < dogFly.awayX; dog.legPhase += 0.016 * 12;
+              if (Math.abs(dog.x - lastPawX) > dog.size * 0.72) { spawnPawPrint(dog.x, groundY - 2); lastPawX = dog.x; }
+              if (dogFly.returnT >= 1) { dogFly.active = false; dog.x = dogTarget.x; dogHoverTriggered = false; }
+            }
+          }
+          drawDog(dog.x, dog.y - dog.size * 0.44, dog.size, dog.legPhase, 1, false, dog.facingLeft, dog.tailWag);
+        }
+
+        // cursor trail
+        cursorTrail.push({ x: mousePos.x, y: mousePos.y, age: 0, hue: 300 + Math.sin(t * 2) * 40, r: 3 + Math.sin(t * 3) * 1.5 });
+        for (let i = cursorTrail.length - 1; i >= 0; i--) {
+          const p = cursorTrail[i]; p.age += 0.016;
+          const life = Math.max(0, 1 - p.age / 0.7);
+          if (life <= 0) { cursorTrail.splice(i, 1); continue; }
+          ctx.save();
+          const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 6 * life);
+          grd.addColorStop(0, `hsla(${p.hue},100%,80%,${life * 0.25})`); grd.addColorStop(1, "transparent");
+          ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 6 * life, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.r * life, 0, Math.PI * 2);
+          ctx.fillStyle = `hsla(${p.hue},100%,90%,${life * 0.9})`; ctx.shadowColor = `hsla(${p.hue},100%,75%,1)`; ctx.shadowBlur = 12 * life; ctx.fill(); ctx.restore();
+        }
+        if (cursorTrail.length > 80) cursorTrail.splice(0, cursorTrail.length - 80);
+
+        t += 0.016;
+        requestAnimationFrame(draw);
       }
-    }
-  }
-  prevHoverType=curHoverType;
-  if(curHoverType!==undefined){setCursorHover(curHoverType,hintText);}
 
-  // update + draw hoa mini trên cỏ
-  for(let i=grassFlowers.length-1;i>=0;i--){
-    const f=grassFlowers[i];
-    const age=t-f.born;
-    const fadeAge=t-f.fadingAt;
-    if(fadeAge>0){
-      f.prog=Math.max(0,f.prog-0.018);
-      if(f.prog<=0){grassFlowers.splice(i,1);continue;}
-    } else {
-      f.prog=Math.min(f.prog+0.022,1);
-    }
-    drawMiniFlower(f.tipX, f.tipY, f.sz, f.prog, f.hue);
-  }
+      window.addEventListener("resize", () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        if (seqPhase === "full") {
+          const fp = computeEnvFinalPos(); positionEnvelopeEl(fp.x, fp.y);
+          const hint = document.getElementById("env-hint");
+          hint.style.left = fp.x + "px";
+        }
+      });
 
-  let shakeOff=0;
-  if(bushShake.active){bushShake.t+=0.016;bushShake.intensity=Math.max(0,1-bushShake.t/1.8);shakeOff=Math.sin(bushShake.t*22)*22*bushShake.intensity;if(bushShake.intensity<=0)bushShake.active=false;}
-
-  for(let i=grassWaves.length-1;i>=0;i--){grassWaves[i].t+=0.016;if(grassWaves[i].t>1.0)grassWaves.splice(i,1);}
-  function getGrassRipple(bx){let r=0;for(const w of grassWaves){const d=Math.abs(bx-w.x),wr=w.t*110;const wf=Math.abs(d-wr),sw2=20+w.t*12;if(wf<sw2){const td=Math.pow(Math.max(0,1-w.t/0.8),2);const dd=Math.exp(-d*0.012);r+=Math.cos((wf/sw2)*Math.PI*0.5)*18*td*dd;}}return r;}
-
-  // --- GRASS & STEMS ---
-  bgBlades.forEach(b=>{
-    const raw=Math.max(0,(ge2-b.delay)/b.growDur);
-    if(raw<=0)return;
-    const p=irregularEase(Math.min(raw,1),b.easingType);
-    drawGrass(CX+b.x,groundY,b.h,b.lean+Math.sin(t*0.5+b.phase)*5+_windBase*b.h*0.04,b.lw,`rgba(${30+Math.round(b.alpha*20)},${90+Math.round(b.alpha*40)},${25+Math.round(b.alpha*15)},${b.alpha*p})`,p,getGrassRipple(CX+b.x)*0.3);
-  });
-  // tất cả stems dùng chung 1 prog
-  stems.forEach(s=>{
-    if(stemGlobalProg<=0)return;
-    const wf=_windBase,hf=s.h/(SHB*MS);const swo=wf*s.h*0.055*hf*s.swayFactor;
-    const ps=Math.sin(t*s.swayFreq+s.swayPhase)*6*s.swayFactor+Math.sin(t*s.swayFreq*1.7+s.swayPhase)*2*s.swayFactor;
-    const hwr=wf*0.18*hf*s.swayFactor+Math.sin(t*s.swayFreq*2.1+s.swayPhase+1.2)*0.08*s.swayFactor;
-    buildStem(CX+s.ox,groundY,s.h,s.lean+shakeOff*s.swayFactor,s.lw,s.leaves,s.flSz,sw*s.swayFactor+ps+shakeOff*s.swayFactor*0.5,stemGlobalProg,s.curve,swo,hwr);
-    // spawn bướm khi hoa vừa nở
-    if(stemGlobalProg>0.82&&!s._butterflySpawned){
-      s._butterflySpawned=true;
-      const tipX=CX+s.ox+s.lean+(sw*s.swayFactor)*0.5;
-      const tipY=groundY-s.h+8;
-      const count=1+Math.floor(Math.random()*2);
-      for(let i=0;i<count;i++) setTimeout(()=>spawnButterfly(tipX,tipY), i*300+Math.random()*800);
-    }
-  });
-  const midOx=stems.reduce((a,s)=>a+s.ox,0)/stems.length;
-  glow(CX+midOx,groundY-200*MS,120*MS,`rgba(180,80,255,${0.11*gp})`);
-  midBlades.forEach(b=>{
-    const raw=Math.max(0,(ge2-b.delay)/b.growDur);
-    if(raw<=0)return;
-    const p=irregularEase(Math.min(raw,1),b.easingType);
-    drawGrass(CX+b.x,groundY,b.h,b.lean+Math.sin(t*0.6+b.phase)*6+_windBase*b.h*0.05,b.lw,`rgba(${45+Math.round(b.alpha*25)},${130+Math.round(b.alpha*40)},${35+Math.round(b.alpha*20)},${b.alpha*p})`,p,getGrassRipple(CX+b.x)*0.5);
-  });
-  fgBlades.forEach(b=>{
-    const raw=Math.max(0,(ge2-b.delay)/b.growDur);
-    if(raw<=0)return;
-    const p=irregularEase(Math.min(raw,1),b.easingType);
-    drawGrass(CX+b.x,groundY,b.h,b.lean+Math.sin(t*0.7+b.phase)*7+_windBase*b.h*0.06,b.lw,`rgba(${60+Math.round(b.alpha*20)},${160+Math.round(b.alpha*30)},${45+Math.round(b.alpha*20)},${b.alpha*p})`,p,getGrassRipple(CX+b.x)*0.8);
-  });
-
-  if(gp>0.6){const sp=Math.min((gp-0.6)/0.4,1);sparks.forEach(pk=>{pk.phase+=pk.spd;const a=(Math.sin(pk.phase)*0.5+0.5)*0.88*sp;if(a<0.01)return;ctx.save();ctx.beginPath();ctx.arc(pk.x,pk.y,pk.r,0,Math.PI*2);ctx.fillStyle=`rgba(255,210,232,${a})`;ctx.shadowColor="rgba(255,175,210,1)";ctx.shadowBlur=8;ctx.fill();ctx.restore();});}
-
-  fireflies.forEach(f=>{f.phase+=f.blinkSpd;if(gp>0.8&&!f.risen){f.y+=f.vy;if(f.y<=f.targetY){f.y=f.targetY;f.risen=true;f.vy=-(Math.random()*0.04+0.02);}}else if(f.risen){f.x+=f.vx+Math.sin(f.phase*0.7)*0.08;f.y+=f.vy+Math.cos(f.phase*0.5)*0.06;if(f.x<0||f.x>W)f.vx*=-1;if(f.y<10||f.y>groundY-10)f.vy*=-1;}const gl=Math.sin(f.phase)*0.5+0.5,fa=gl*0.92*gp;if(fa<0.01)return;const glR=f.r*5+gl*10;ctx.save();const og=ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,glR);og.addColorStop(0,`hsla(${f.hue},100%,75%,${fa*0.55})`);og.addColorStop(0.4,`hsla(${f.hue},100%,65%,${fa*0.18})`);og.addColorStop(1,"transparent");ctx.fillStyle=og;ctx.beginPath();ctx.arc(f.x,f.y,glR,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(f.x,f.y,f.r*gl+0.4,0,Math.PI*2);ctx.fillStyle=`hsla(${f.hue},100%,92%,${fa})`;ctx.shadowColor=`hsla(${f.hue},80%,80%,0.9)`;ctx.shadowBlur=12;ctx.fill();ctx.restore();});
-
-  for(let i=hoverFireflies.length-1;i>=0;i--){const f=hoverFireflies[i];f.phase+=f.blinkSpd;f.x+=f.vx+Math.sin(f.phase*0.8)*0.08;f.y+=f.vy+Math.cos(f.phase*0.6)*0.06;f.vx*=0.992;f.vy*=0.992;f.vy+=0.001;f.life-=f.decay;if(f.life<=0){hoverFireflies.splice(i,1);continue;}const gl=Math.sin(f.phase)*0.5+0.5,fa=gl*f.life*0.95,glR=f.r*6+gl*12;ctx.save();const og=ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,glR);og.addColorStop(0,`hsla(${f.hue},100%,80%,${fa*0.6})`);og.addColorStop(0.5,`hsla(${f.hue},100%,65%,${fa*0.2})`);og.addColorStop(1,"transparent");ctx.fillStyle=og;ctx.beginPath();ctx.arc(f.x,f.y,glR,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(f.x,f.y,f.r*gl+0.5,0,Math.PI*2);ctx.fillStyle=`hsla(${f.hue},100%,95%,${fa})`;ctx.shadowColor=`hsla(${f.hue},100%,80%,0.95)`;ctx.shadowBlur=14;ctx.fill();ctx.restore();}
-
-  // ---- BƯỚM ----
-  for(let i=butterflies.length-1;i>=0;i--){
-    const b=butterflies[i];
-    const age=t-b.born;
-    // fade in 1.2s
-    b.alpha=Math.min(age/1.2,1);
-    // rời đi sau leavingAt giây
-    if(!b.leaving&&age>b.leavingAt) b.leaving=true;
-    if(b.leaving){
-      b.cx+=b.leaveVX;b.cy+=b.leaveVY;
-      b.leaveVY-=0.003; // tăng tốc bay lên
-      b.alpha=Math.max(0,b.alpha-(0.008+Math.random()*0.004));
-      if(b.alpha<=0){butterflies.splice(i,1);continue;}
-    }
-    // đập cánh
-    b.flapPhase+=b.flapSpd*0.016;
-    // bay quỹ đạo elipse
-    b.angle+=b.speed*0.016;
-    // drift lơ lửng nhẹ
-    b.cx+=Math.sin(t*b.driftSpd+b.driftPhaseX)*0.12;
-    b.cy+=Math.cos(t*b.driftSpd*0.7+b.driftPhaseY)*0.08;
-    drawButterfly(b);
-  }
-
-  for(let i=burstParticles.length-1;i>=0;i--){const p=burstParticles[i];p.x+=p.vx;p.y+=p.vy;p.vy+=0.06;p.life-=p.decay;if(p.life<=0){burstParticles.splice(i,1);continue;}ctx.save();ctx.beginPath();ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2);ctx.fillStyle=`hsla(${p.hue},100%,${p.bright}%,${p.life})`;ctx.shadowColor=`hsla(${p.hue},100%,80%,0.9)`;ctx.shadowBlur=10;ctx.fill();ctx.restore();}
-
-  for(let i=pawPrints.length-1;i>=0;i--){pawPrints[i].life-=pawPrints[i].decay;if(pawPrints[i].life<=0){pawPrints.splice(i,1);continue;}drawPawPrint(pawPrints[i]);}
-
-  dog.tailWag+=0.016;
-
-  // ---- SEQUENCE ----
-  const ESZ=getEnvSize();
-  const EW=ESZ.w, EH=ESZ.h;
-  const ENV_Y=H*0.38; // chiều cao phong bì khi đang kéo
-  // Điểm dừng bên phải — ngay cạnh phong bì (ngoài màn hình phải)
-  const DOG_RIGHT_STOP=W*0.80; // chó dừng ở đây trước khi quay
-  const ENV_START_X=W+EW*0.5+30; // phong bì bắt đầu ngoài màn hình phải
-
-  if(seqPhase==="dog-enter"){
-    // Chó chạy từ trái sang phải, mặt nhìn phải
-    dogEnterT=Math.min(dogEnterT+0.016/5.5,1);
-    const tt=easeInOut(dogEnterT);
-    dog.x=lerp(-dog.size, DOG_RIGHT_STOP, tt);
-    dog.y=groundY;
-    dog.facingLeft=false;
-    dog.legPhase+=0.016*12;
-    if(Math.abs(dog.x-lastPawX)>dog.size*0.85){spawnPawPrint(dog.x,groundY-2);lastPawX=dog.x;}
-    drawDog(dog.x,dog.y-dog.size*0.44,dog.size,dog.legPhase,1,false,false,dog.tailWag);
-
-    if(dogEnterT>=1){
-      seqPhase="dog-turn";
-      dogTurnT=0;
-    }
-
-  }else if(seqPhase==="dog-turn"){
-    // Chó dừng ở phải, nhìn sang phải về phía phong bì, rồi móc dây
-    dogTurnT=Math.min(dogTurnT+0.016/2.0,1);
-    dog.x=DOG_RIGHT_STOP;
-    dog.y=groundY;
-    // chó đang nhìn phải (tiếp tục từ dog-enter), giờ nhìn phía phong bì bên phải
-    dog.facingLeft=false;
-    dog.legPhase+=0.016*(0.5+Math.sin(dogTurnT*Math.PI)*2); // bước chân hồi hộp
-    // phong bì hiện dần từ bên phải
-    const envAppearA=Math.max(0,(dogTurnT-0.3)/0.5);
-    if(envAppearA>0){
-      envSlide.active=true;
-      envSlide.x=ENV_START_X;
-      envSlide.y=ENV_Y;
-      envSlide.w=EW; envSlide.h=EH;
-      envSlide.tilt=0;
-      drawEnvFlat(envSlide.x, envSlide.y, EW, EH, 0, Math.min(envAppearA,1));
-      // dây thừng hình thành dần
-      if(dogTurnT>0.6){
-        const mx=dog.x+dog.size*0.85; // miệng bên phải
-        const my=dog.y-dog.size*0.5;
-        initRope(mx, my, ENV_START_X-EW*0.45, ENV_Y);
-        updateRope(mx, my, ENV_START_X-EW*0.45, ENV_Y);
-        ctx.save();ctx.globalAlpha=Math.min((dogTurnT-0.6)/0.3,1);
-        drawRope();
-        ctx.restore();
-      }
-    }
-    drawDog(dog.x,dog.y-dog.size*0.44,dog.size,dog.legPhase,1,dogTurnT>0.6,false,dog.tailWag);
-
-    if(dogTurnT>=1){
-      seqPhase="dog-pull";
-      dogPullT=0;
-      envSlide.active=true;
-      envSlide.x=ENV_START_X;
-      envSlide.y=ENV_Y;
-      envSlide.startX=ENV_START_X;
-      envSlide.finalX=CX;
-      envSlide.finalY=H*0.28;
-      envSlide.tilt=0;
-      envSlide.w=EW; envSlide.h=EH;
-      const mx=dog.x+dog.size*0.85, my=dog.y-dog.size*0.5;
-      initRope(mx, my, ENV_START_X-EW*0.45, ENV_Y);
-      dog.isCarrying=true;
-    }
-
-  }else if(seqPhase==="dog-pull"){
-    // Chó ĐI LÙI sang trái: mặt nhìn PHẢI (về phía phong bì), thân lùi sang trái
-    dogPullT=Math.min(dogPullT+0.016/8.0,1);
-    const tt=easeInOut(dogPullT);
-
-    // chó lùi từ DOG_RIGHT_STOP sang CX*0.45
-    dog.x=lerp(DOG_RIGHT_STOP, CX*0.45, tt);
-    dog.y=groundY;
-    dog.facingLeft=false; // mặt nhìn PHẢI — hướng về phong bì, đang gắng kéo lùi
-    // legPhase chạy ngược cho cảm giác bước lùi
-    dog.legPhase-=0.016*9;
-    if(Math.abs(dog.x-lastPawX)>dog.size*0.85){spawnPawPrint(dog.x,groundY-2);lastPawX=dog.x;}
-
-    // phong bì trượt từ phải vào theo
-    envSlide.x=lerp(envSlide.startX, CX*1.05, easeOut(tt));
-    envSlide.y=ENV_Y + Math.sin(tt*Math.PI*3)*5;
-    envSlide.tilt=Math.sin(tt*Math.PI*4)*2.5*(1-tt*0.8);
-
-    // dây nối từ miệng chó (mặt nhìn phải → miệng ở bên phải) đến mép trái phong bì
-    const mouthX=dog.x+dog.size*0.85;
-    const mouthY=dog.y-dog.size*0.5;
-    const ropeEndX=envSlide.x-EW*0.45;
-    const ropeEndY=envSlide.y;
-    updateRope(mouthX, mouthY, ropeEndX, ropeEndY);
-    drawRope();
-    drawEnvFlat(envSlide.x, envSlide.y, EW, EH, envSlide.tilt, 1);
-    // isCarrying=true → miệng ngậm dây
-    drawDog(dog.x,dog.y-dog.size*0.44,dog.size,dog.legPhase,1,true,false,dog.tailWag);
-
-    if(dogPullT>=1){
-      seqPhase="env-place";
-      envPlaceT=0;
-      envSlide.startX=envSlide.x;
-      rope.active=false;
-      dog.isCarrying=false;
-    }
-
-  }else if(seqPhase==="env-place"){
-    // Phong bì nổi lên vị trí cuối, chó thả dây, đứng nhìn
-    envPlaceT=Math.min(envPlaceT+0.016/2.5,1);
-    const tt=easeInOut(envPlaceT);
-    envSlide.x=lerp(envSlide.startX, envSlide.finalX, tt);
-    envSlide.y=lerp(ENV_Y, envSlide.finalY, tt);
-    envSlide.tilt=Math.sin(tt*Math.PI)*6*(1-tt);
-    drawEnvFlat(envSlide.x, envSlide.y, EW, EH, envSlide.tilt, 1);
-
-    dog.x=lerp(dog.x, CX*0.42, 0.03);
-    dog.legPhase+=0.016*0.8;
-    // chó quay mặt về phải để nhìn phong bì bay lên
-    drawDog(dog.x,dog.y-dog.size*0.44,dog.size,dog.legPhase,1,false,false,dog.tailWag);
-
-    if(envPlaceT>=1){
-      seqPhase="dog-return";
-      dogReturnT=0;
-      envSlide.active=false;
-      const fp=computeEnvFinalPos();
-      positionEnvelopeEl(fp.x, fp.y);
-      const scene=document.getElementById("env-scene");
-      const hint=document.getElementById("env-hint");
-      scene.classList.add("show");
-      hint.style.left=fp.x+"px";
-      hint.style.top=(fp.y+140)+"px";
-      setTimeout(()=>hint.classList.add("visible"),600);
-    }
-
-  }else if(seqPhase==="dog-return"){
-    dogReturnT=Math.min(dogReturnT+0.016/4.0,1);
-    const tt=easeInOut(dogReturnT);
-    dog.x=lerp(dog.x, dogTarget.x, tt*0.06+0.01);
-    dog.y=groundY;
-    dog.facingLeft=dog.x>dogTarget.x;
-    dog.legPhase+=0.016*8*(1-easeOut(dogReturnT));
-    if(Math.abs(dog.x-lastPawX)>dog.size*0.85){spawnPawPrint(dog.x,groundY-2);lastPawX=dog.x;}
-    drawDog(dog.x,dog.y-dog.size*0.44,dog.size,dog.legPhase,1,false,dog.facingLeft,dog.tailWag);
-    if(dogReturnT>=1){seqPhase="full";dog.landed=true;dog._restX=dogTarget.x;dogIdlePhase=0;}
-
-  }else if(seqPhase==="full"){
-    dogIdlePhase+=0.016;
-    if(!dogFly.active){
-      dog.x=dogTarget.x+Math.sin(dogIdlePhase*0.4)*2.5;
-      dog.y=groundY;dog.legPhase+=0.016*0.8;dog.facingLeft=false;
-    }else{
-      if(dogFly.phase==="away"){
-        dogFly.awayT=Math.min(dogFly.awayT+0.016/DOG_SPEED,1);
-        const tt=easeInOut(dogFly.awayT);
-        dog.x=lerp(dogFly.startX,dogFly.awayX,tt);dog.y=groundY;
-        dog.facingLeft=dogFly.awayX<dogFly.startX;dog.legPhase+=0.016*12;
-        if(Math.abs(dog.x-lastPawX)>dog.size*0.72){spawnPawPrint(dog.x,groundY-2);lastPawX=dog.x;}
-        if(dogFly.awayT>=1){dogFly.phase="return";dogFly.returnT=0;}
-      }else{
-        dogFly.returnT=Math.min(dogFly.returnT+0.016/DOG_RET,1);
-        const tt=easeInOut(dogFly.returnT);
-        dog.x=lerp(dogFly.awayX,dogTarget.x,tt);dog.y=groundY;
-        dog.facingLeft=dogTarget.x<dogFly.awayX;dog.legPhase+=0.016*12;
-        if(Math.abs(dog.x-lastPawX)>dog.size*0.72){spawnPawPrint(dog.x,groundY-2);lastPawX=dog.x;}
-        if(dogFly.returnT>=1){dogFly.active=false;dog.x=dogTarget.x;dogHoverTriggered=false;}
-      }
-    }
-    drawDog(dog.x,dog.y-dog.size*0.44,dog.size,dog.legPhase,1,false,dog.facingLeft,dog.tailWag);
-  }
-
-  // cursor trail
-  cursorTrail.push({x:mousePos.x,y:mousePos.y,age:0,hue:300+Math.sin(t*2)*40,r:3+Math.sin(t*3)*1.5});
-  for(let i=cursorTrail.length-1;i>=0;i--){const p=cursorTrail[i];p.age+=0.016;const life=Math.max(0,1-p.age/0.7);if(life<=0){cursorTrail.splice(i,1);continue;}ctx.save();const grd=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*6*life);grd.addColorStop(0,`hsla(${p.hue},100%,80%,${life*0.25})`);grd.addColorStop(1,"transparent");ctx.fillStyle=grd;ctx.beginPath();ctx.arc(p.x,p.y,p.r*6*life,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(p.x,p.y,p.r*life,0,Math.PI*2);ctx.fillStyle=`hsla(${p.hue},100%,90%,${life*0.9})`;ctx.shadowColor=`hsla(${p.hue},100%,75%,1)`;ctx.shadowBlur=12*life;ctx.fill();ctx.restore();}
-  if(cursorTrail.length>80)cursorTrail.splice(0,cursorTrail.length-80);
-
-  t+=0.016;
-  requestAnimationFrame(draw);
-}
-
-window.addEventListener("resize",()=>{
-  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
-  if(seqPhase==="full"){
-    const fp=computeEnvFinalPos();positionEnvelopeEl(fp.x,fp.y);
-    const hint=document.getElementById("env-hint");
-    hint.style.left=fp.x+"px";
-  }
-});
-
-draw();
-</script>
-</body>
+      draw();
+    </script>
+  </body>
 </html>
